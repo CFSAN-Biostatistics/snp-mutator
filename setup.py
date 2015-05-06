@@ -52,6 +52,9 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
+    scripts=[
+        'mutator/mutator.py',
+    ],
     test_suite='tests',
     tests_require=test_requirements
 )
