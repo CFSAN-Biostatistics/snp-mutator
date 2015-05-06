@@ -7,101 +7,6 @@ from numpy.random import choice,seed
 import subprocess
 import shutil
 
-### Setup args
-usage="""Takes a fasta file and creates N base substitutions and N insertion/deletions. Assumes you have the simulation program installed in your path and outputs a summary file, mutated genomes, and fastq files form art.
-usage: %prog -i FILE (args)"""
-
-
-parser = argparse.ArgumentParser(description= usage)
-
-
-parser.add_argument("-i", "--in-file", metavar="FILE", dest="in_file", default=None,
-				help="Specify the input fasta FILE")
-
-parser.add_argument("-s", "--summary", metavar="FILE", dest="summary_file", default=None,
-				help="Specify the name of the file to output positional information to.")
-
-parser.add_argument("-n", "--number-of-simulations", metavar="INT", dest="num_sims", default=None,
-				help="Specify the number of simulations to run. Default is 100.")
-
-parser.add_argument("-m", "--number-of-substitutions", metavar="INT", dest="num_subs", default=None,
-				help="Specify the number of substitutions. Default is 500.")
-
-parser.add_argument("-t", "--num-of-insertions", metavar="INT", dest="num_insertions", default=None,
-				help="Specify the number of insertions. Default is 20.")
-
-parser.add_argument("-d", "--num-of-deletions", metavar="INT", dest="num_deletions", default=None,
-				help="Specify the number of deletions. Default is 20.")
-
-parser.add_argument("-r", "--run_snp_pipeline", metavar="STRING", dest="run_snp", default=None,
-				help="Specify whether to run snp_pipeline - yes or no. Default is No.")
-
-parser.add_argument("-e", "--random-number-seed", metavar="INT", dest="ran_seed", default=None,
-				help="Specify the random number seed - this will cause all mutated genomes to be identical. Default is to get one from the computer.")
-
-parser.add_argument("-rs", "--random-number-seed-for-art", metavar="INT", dest="art_seed", default=None,
-				help="Specify the random number seed - this will cause all fastq simulations to have the same random seed. Default is to get one from the computer.")
-
-args = parser.parse_args()
-
-
-### Input file args
-if args.in_file:
-	in_file = os.path.abspath(args.in_file)
-else:	
-	print "You must specify an in_file. Use '-h' for help."
-	sys.exit()
-
-(in_filePath, in_fileWholeName) = os.path.split(in_file)
-(in_fileBase, in_fileExt) = os.path.splitext(in_fileWholeName)
-
-###	 Summary args
-if args.summary_file:
-	contigs_file = os.path.abspath(args.summary_file)
-else:
-	summary_file = os.path.join(in_filePath, in_fileBase + "_mutatedSNPlist.txt")
-
-### Define number of simulations, substitutions and indels
-if args.num_sims == None:
-	numSims = 100
-else:
-	numSims = int(args.num_sims)
-
-if args.num_subs == None:
-	numSubs = 500
-else:
-	numSubs = int(args.num_subs)
-
-if args.num_deletions == None:
-	numDels = 20
-else:
-	numDels = int(args.num_deletions)
-
-if args.num_insertions == None:
-	numInsertions = 20
-else:
-	numInsertions = int(args.num_insertions)
-
-### Parse whether to run snp_pipeline
-if args.run_snp == None:
-	runSNP = "No"
-elif args.run_snp == "no":
-	runSNP = "No"
-elif args.run_snp == "No":
-	runSNP = "No"
-else:	
-	runSNP = args.run_snp
-
-### Parse random seed options
-if args.ran_seed == None:
-	pass
-else:
-	ranSeed = int(args.ran_seed)
-
-if args.art_seed == None:
-	pass
-else:
-	artSeed = args.art_seed
 
 ### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
 seqString = []
@@ -118,14 +23,14 @@ def getSequence(in_file):
 				pass
 			else:
 				seqString.append(line.strip("\n"))
-getSequence(in_file)
+
 
 def buildSeqDict(seqString):
 	seq = "".join(seqString)
 	seqLength.append(len(seq))
 	for idx, i in enumerate(seq):
 		seqDict[idx]= i
-buildSeqDict(seqString)
+
 
 
 ### Run simulations to get mutated genome
@@ -207,7 +112,6 @@ def runSimulations(seqDict):
 				writeNewSequence()
 			buildNewSeq()
 			
-runSimulations(seqDict)
 
 
 ### Run art simulations  - right now it overwrites any previous runs
@@ -227,7 +131,6 @@ def runArtSimulations():
 		except NameError:
 			subprocess.call(["art_illumina", "-i", inputFile, "-p", "-l", "250", "-ss", "MS", "-f", "100", "-m", "500", "-s", "10", "-o", outputFile])
 
-runArtSimulations()
 
 
 ### Run snppipeline on all replicates simulataneously
@@ -241,5 +144,106 @@ def runSnpPipeline():
 		print outDir
 		print in_file
 		subprocess.call(["run_snp_pipeline.sh", "-s", sampleDir, "-o", outDir, in_file])
-runSnpPipeline()
 
+
+if __name__ == '__main__':
+	usage="""Takes a fasta file and creates N base substitutions and N insertion/deletions. Assumes you have the simulation program installed in your path and outputs a summary file, mutated genomes, and fastq files form art.
+	usage: %prog -i FILE (args)"""
+
+
+	parser = argparse.ArgumentParser(description= usage)
+
+
+	parser.add_argument("-i", "--in-file", metavar="FILE", dest="in_file", default=None,
+					help="Specify the input fasta FILE")
+
+	parser.add_argument("-s", "--summary", metavar="FILE", dest="summary_file", default=None,
+					help="Specify the name of the file to output positional information to.")
+
+	parser.add_argument("-n", "--number-of-simulations", metavar="INT", dest="num_sims", default=None,
+					help="Specify the number of simulations to run. Default is 100.")
+
+	parser.add_argument("-m", "--number-of-substitutions", metavar="INT", dest="num_subs", default=None,
+					help="Specify the number of substitutions. Default is 500.")
+
+	parser.add_argument("-t", "--num-of-insertions", metavar="INT", dest="num_insertions", default=None,
+					help="Specify the number of insertions. Default is 20.")
+
+	parser.add_argument("-d", "--num-of-deletions", metavar="INT", dest="num_deletions", default=None,
+					help="Specify the number of deletions. Default is 20.")
+
+	parser.add_argument("-r", "--run_snp_pipeline", metavar="STRING", dest="run_snp", default=None,
+					help="Specify whether to run snp_pipeline - yes or no. Default is No.")
+
+	parser.add_argument("-e", "--random-number-seed", metavar="INT", dest="ran_seed", default=None,
+					help="Specify the random number seed - this will cause all mutated genomes to be identical. Default is to get one from the computer.")
+
+	parser.add_argument("-rs", "--random-number-seed-for-art", metavar="INT", dest="art_seed", default=None,
+					help="Specify the random number seed - this will cause all fastq simulations to have the same random seed. Default is to get one from the computer.")
+
+	args = parser.parse_args()
+
+
+	### Input file args
+	if args.in_file:
+		in_file = os.path.abspath(args.in_file)
+	else:	
+		print "You must specify an in_file. Use '-h' for help."
+		sys.exit()
+
+	(in_filePath, in_fileWholeName) = os.path.split(in_file)
+	(in_fileBase, in_fileExt) = os.path.splitext(in_fileWholeName)
+
+	###	 Summary args
+	if args.summary_file:
+		contigs_file = os.path.abspath(args.summary_file)
+	else:
+		summary_file = os.path.join(in_filePath, in_fileBase + "_mutatedSNPlist.txt")
+
+	### Define number of simulations, substitutions and indels
+	if args.num_sims == None:
+		numSims = 100
+	else:
+		numSims = int(args.num_sims)
+
+	if args.num_subs == None:
+		numSubs = 500
+	else:
+		numSubs = int(args.num_subs)
+
+	if args.num_deletions == None:
+		numDels = 20
+	else:
+		numDels = int(args.num_deletions)
+
+	if args.num_insertions == None:
+		numInsertions = 20
+	else:
+		numInsertions = int(args.num_insertions)
+
+	### Parse whether to run snp_pipeline
+	if args.run_snp == None:
+		runSNP = "No"
+	elif args.run_snp == "no":
+		runSNP = "No"
+	elif args.run_snp == "No":
+		runSNP = "No"
+	else:	
+		runSNP = args.run_snp
+
+	### Parse random seed options
+	if args.ran_seed == None:
+		pass
+	else:
+		ranSeed = int(args.ran_seed)
+
+	if args.art_seed == None:
+		pass
+	else:
+		artSeed = args.art_seed
+		
+	getSequence(in_file)	
+	buildSeqDict(seqString)	
+	runSimulations(seqDict)
+	runArtSimulations()
+	runSnpPipeline()
