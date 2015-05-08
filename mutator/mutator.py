@@ -115,80 +115,43 @@ def runSimulations(seqDict):
 
 
 if __name__ == '__main__':
-	usage="""Takes a fasta file and creates N base substitutions and N insertion/deletions. Assumes you have the simulation program installed in your path and outputs a summary file, mutated genomes, and fastq files form art.
-	usage: %prog -i FILE (args)"""
+    usage = """Generate mutated sequence files from a reference genome.  Takes a fasta file and creates 
+               a specified number of randomly generated base substitutions, insertions, and deletions.  
+               Outputs the mutated genomes, and optionally, a summary file listing the mutations by 
+               position."""
 
+    parser = argparse.ArgumentParser(description=usage, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-	parser = argparse.ArgumentParser(description= usage)
+    parser.add_argument(                                             dest="input_fasta_file", type=str,               help="Input fasta file.")
+    parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str, default=None, help="Output positional summary file.")
+    parser.add_argument("-n", "--num-simulations",   metavar="INT",  dest="num_sims",         type=int, default=100,  help="Number of mutated sequences to generate.")
+    parser.add_argument("-s", "--num-substitutions", metavar="INT",  dest="num_subs",         type=int, default=500,  help="Number of substitutions.")
+    parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=int, default=20,   help="Number of insertions.")
+    parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=int, default=20,   help="Number of deletions.")
+    parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int, default=None, help="Random number seed making the results reproducible.")
+    
+    args = parser.parse_args()
+    
+    # Input file arg
+    in_file = args.input_fasta_file
+    in_filePath, in_fileWholeName = os.path.split(in_file)
+    in_fileBase, in_fileExt = os.path.splitext(in_fileWholeName)
+    
+    # Summary arg
+    if args.summary_file:
+        summary_file = os.path.abspath(args.summary_file)
+    
+    # Get number of simulations, substitutions and indels
+    numSims = args.num_sims
+    numSubs = args.num_subs
+    numInsertions = args.num_insertions
+    numDels = args.num_deletions
+    
+    # Random seed option
+    ranSeed = args.random_seed
+    
+    # Read the reference and generate mutations
+    getSequence(in_file)
+    buildSeqDict(seqString)
+    runSimulations(seqDict)
 
-
-	parser.add_argument("-i", "--in-file", metavar="FILE", dest="in_file", default=None,
-					help="Specify the input fasta FILE")
-
-	parser.add_argument("-s", "--summary", metavar="FILE", dest="summary_file", default=None,
-					help="Specify the name of the file to output positional information to.")
-
-	parser.add_argument("-n", "--number-of-simulations", metavar="INT", dest="num_sims", default=None,
-					help="Specify the number of simulations to run. Default is 100.")
-
-	parser.add_argument("-m", "--number-of-substitutions", metavar="INT", dest="num_subs", default=None,
-					help="Specify the number of substitutions. Default is 500.")
-
-	parser.add_argument("-t", "--num-of-insertions", metavar="INT", dest="num_insertions", default=None,
-					help="Specify the number of insertions. Default is 20.")
-
-	parser.add_argument("-d", "--num-of-deletions", metavar="INT", dest="num_deletions", default=None,
-					help="Specify the number of deletions. Default is 20.")
-
-	parser.add_argument("-e", "--random-number-seed", metavar="INT", dest="ran_seed", default=None,
-					help="Specify the random number seed - this will cause all mutated genomes to be identical. Default is to get one from the computer.")
-
-	args = parser.parse_args()
-
-
-	### Input file args
-	if args.in_file:
-		in_file = os.path.abspath(args.in_file)
-	else:	
-		print "You must specify an in_file. Use '-h' for help."
-		sys.exit()
-
-	(in_filePath, in_fileWholeName) = os.path.split(in_file)
-	(in_fileBase, in_fileExt) = os.path.splitext(in_fileWholeName)
-
-	###	 Summary args
-	if args.summary_file:
-		contigs_file = os.path.abspath(args.summary_file)
-	else:
-		summary_file = os.path.join(in_filePath, in_fileBase + "_mutatedSNPlist.txt")
-
-	### Define number of simulations, substitutions and indels
-	if args.num_sims == None:
-		numSims = 100
-	else:
-		numSims = int(args.num_sims)
-
-	if args.num_subs == None:
-		numSubs = 500
-	else:
-		numSubs = int(args.num_subs)
-
-	if args.num_deletions == None:
-		numDels = 20
-	else:
-		numDels = int(args.num_deletions)
-
-	if args.num_insertions == None:
-		numInsertions = 20
-	else:
-		numInsertions = int(args.num_insertions)
-
-	### Parse random seed options
-	if args.ran_seed == None:
-		pass
-	else:
-		ranSeed = int(args.ran_seed)
-
-	getSequence(in_file)	
-	buildSeqDict(seqString)	
-	runSimulations(seqDict)
