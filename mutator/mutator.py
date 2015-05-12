@@ -138,8 +138,8 @@ def main(args):
     """
     # Input file arg
     in_file = args.input_fasta_file
-    in_filePath, in_fileWholeName = os.path.split(in_file)
-    in_fileBase, in_fileExt = os.path.splitext(in_fileWholeName)
+    in_file_name = os.path.basename(in_file)
+    in_fileBase, in_fileExt = os.path.splitext(in_file_name)
     
     # Summary arg
     if args.summary_file:
