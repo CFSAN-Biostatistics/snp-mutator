@@ -297,16 +297,44 @@ class TestMutator(unittest.TestCase):
         print "Deliberately causing an error here:"
         with self.assertRaises(SystemExit):  # Verify exit if number of mutations exceeds sequence length
             mutator.main(args)
+            
+    def test_not_all_same(self):
+        """
+        Verify Mutator creates different mutated fasta files when generating m
+        more than one.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 3
+        args.num_subs = 2
+        args.num_insertions = 2
+        args.num_deletions = 2
+        args.random_seed = 1
+        args.summary_file = None
+        mutator.main(args)
+        mutated_seq_record0 = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertNotEqual(str(mutated_seq_record0.seq), str(mutated_seq_record1.seq), "Generated sequences 0 and 1 should be different.")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
+        self.assertNotEqual(str(mutated_seq_record0.seq), str(mutated_seq_record2.seq), "Generated sequences 0 and 2 should be different.")
 
     def tearDown(self):
         """
         Delete all the temporary directories and files created during this 
         testing session.
         """
-        os.remove("original_mutated_0.fasta")
-        os.remove("original_snpListMutated.txt")
+        if os.path.exists("original_mutated_0.fasta"):
+            os.remove("original_mutated_0.fasta")
+        if os.path.exists("original_mutated_1.fasta"):
+            os.remove("original_mutated_1.fasta")
+        if os.path.exists("original_mutated_2.fasta"):
+            os.remove("original_mutated_2.fasta")
+        if os.path.exists("original_snpListMutated.txt"):
+            os.remove("original_snpListMutated.txt")
         TempDirectory.cleanup_all()
-        pass
 
 if __name__ == '__main__':
     unittest.main()

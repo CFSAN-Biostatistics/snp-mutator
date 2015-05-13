@@ -1,5 +1,6 @@
 #!/usr/bin/env python
  
+from __future__ import print_function
 import argparse
 import sys
 import os.path
@@ -37,21 +38,13 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
         snpList.write("replicate\tposition\toriginalBase\tnewBase\n")
 
         for replicate in range(0, numSims):  
-                
-### Deal with random seed and generate the positions where the numSubs will occur
-            random.seed(ranSeed)
-                
-            try:
-                positions = random.choice(range(0, seqLength[0]), size=int(numSubs + numDels + numInsertions), replace=False)
-            except ValueError:
-                print "ERROR: You have specified a number of substitutions that is greater than the length of the sequence"
-                sys.exit()
+            positions = random.choice(range(0, seqLength[0]), size=int(numSubs + numDels + numInsertions), replace=False)
             subPositions = positions[:numSubs]
             deletionPositions = positions[numSubs:(numSubs + numDels)]
             insertionPositions = positions[(numSubs + numDels):len(positions)]
 
 ### Create a copy of the sequence dictionary and mutate sites that were identified in the previous step
-            print "Creating replicate ", str(replicate)
+            print("Creating replicate %i" % replicate)
 
             def buildNewSeq():
                 newSeqDict = dict(seqDict)  
@@ -161,10 +154,17 @@ def main(args):
     
     # Random seed option
     ranSeed = args.random_seed
+    random.seed(ranSeed)
     
     # Read the reference and generate mutations
     getSequence(in_file)
     buildSeqDict(seqString)
+    
+    num_mutations = args.num_subs + args.num_insertions + args.num_deletions
+    if num_mutations > seqLength[0]:
+        print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
+        sys.exit()
+    
     runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDict, ranSeed)
 
 
