@@ -3,7 +3,7 @@
 import argparse
 import sys
 import os.path
-from numpy.random import choice,seed
+from numpy import random
 
 
 ### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
@@ -38,14 +38,11 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
 
         for replicate in range(0, numSims):  
                 
-### Deal with random seed and generate the positions where the numSubs will occur   
-            try:
-                seed(ranSeed)
-            except NameError:
-                pass
+### Deal with random seed and generate the positions where the numSubs will occur
+            random.seed(ranSeed)
                 
             try:
-                positions = choice(range(0, seqLength[0] - 1), size=int(numSubs + numDels + numInsertions), replace=False)
+                positions = random.choice(range(0, seqLength[0]), size=int(numSubs + numDels + numInsertions), replace=False)
             except ValueError:
                 print "ERROR: You have specified a number of substitutions that is greater than the length of the sequence"
                 sys.exit()
@@ -63,19 +60,19 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
                         seqDict[i]
                         state = seqDict[i]
                         if state == "A":
-                            newState = str(choice(["C", "T", "G"], size = 1)[0])
+                            newState = str(random.choice(["C", "T", "G"], size = 1)[0])
                             newSeqDict[i] = newState
                             snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
                         if state == "C":
-                            newState = str(choice(["A", "T", "G"], size = 1)[0])
+                            newState = str(random.choice(["A", "T", "G"], size = 1)[0])
                             newSeqDict[i] = newState
                             snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
                         if state == "T":
-                            newState = str(choice(["C", "A", "G"], size = 1)[0])
+                            newState = str(random.choice(["C", "A", "G"], size = 1)[0])
                             newSeqDict[i] = newState
                             snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
                         if state == "G":
-                            newState = str(choice(["C", "T", "A"], size = 1)[0])
+                            newState = str(random.choice(["C", "T", "A"], size = 1)[0])
                             newSeqDict[i] = newState
                             snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
                     except:
@@ -95,7 +92,7 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
                     try:
                         seqDict[i]
                         state = seqDict[i]
-                        newState = str(choice(["A", "C", "T", "G"], size = 1)[0]) + state
+                        newState = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
                         newSeqDict[i] = newState
                         snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_insertion\n") 
                     except:
@@ -136,6 +133,17 @@ def parse_arguments(system_args):
 def main(args):
     """
     """
+    # TODO: remove these globals
+    global seqLength
+    global seqDict
+    global seqName
+    global seqString
+    seqLength = []
+    seqDict = {}
+    seqName = []
+    seqString = []
+    
+    
     # Input file arg
     in_file = args.input_fasta_file
     in_file_name = os.path.basename(in_file)

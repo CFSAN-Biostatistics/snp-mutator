@@ -100,6 +100,25 @@ def write_random_dna_fasta(directory, file_name, length):
     return (file_path, dna)
 
 
+def read_fasta_seq_record(file_path):
+    """
+    Reads a fasta file and returns the first sequence record. Any subsequent sequences are ignored.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the fasta file
+        
+    Returns
+    -------
+    SeqRecord
+        Biopython SeqRecord
+    """
+    with open(file_path) as handle:
+        iter = SeqIO.parse(handle, 'fasta')
+        return iter.next()
+
+
 def compare_fasta_files(file_path1, file_path2):
     """
     Determine if two fasta files have equivalent contents.  Not necessarily 
@@ -117,23 +136,27 @@ def compare_fasta_files(file_path1, file_path2):
     bool
         True if the two fasta files are equivalent, False otherwise.
     """
-    handle1 = open(file_path1)
-    handle2 = open(file_path2)
-    iter1 = SeqIO.parse(handle1, 'fasta')
-    iter2 = SeqIO.parse(handle2, 'fasta')
-    fillvalue = object()
-    paired_records = izip_longest(iter1, iter2, fillvalue=fillvalue)
-    return all(r1.__dict__ == r2.__dict__ for r1, r2 in paired_records)
-    
+    with open(file_path1) as handle1:
+        with open(file_path2) as handle2:
+            iter1 = SeqIO.parse(handle1, 'fasta')
+            iter2 = SeqIO.parse(handle2, 'fasta')
+            fillvalue = object()
+            paired_records = izip_longest(iter1, iter2, fillvalue=fillvalue)
+            return all(r1.__dict__ == r2.__dict__ for r1, r2 in paired_records)
+
 
 class TestMutator(unittest.TestCase):
 
     def setUp(self):
-        pass
+        random.seed(1)
 
     def test_zero_changes(self):
+        """
+        Verify the output fasta file matches the input fasta file when zero
+        substitions, insertions, and deletions are requested.
+        """
         directory = TempDirectory()
-        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 50)
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
         args.num_sims = 1
@@ -144,11 +167,145 @@ class TestMutator(unittest.TestCase):
         args.summary_file = None
         mutator.main(args)
         no_change = compare_fasta_files(original_file_path, "original_mutated_0.fasta")
-        assert(no_change)
-    
+        self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
+
+    def test_snp_changes(self):
+        """
+        Test various numbers of substitutions.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.num_insertions = 0
+        args.num_deletions = 0
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_subs = 1
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "GCTAAATCGG", "SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_subs = 5
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "ACTATAGCGC", "SNP 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_subs = 10
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "AGTCTCGTAC", "SNP 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+    def test_insert_changes(self):
+        """
+        Test various numbers of insertions.
+        """
+        
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.num_subs = 0
+        args.num_deletions = 0
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_insertions = 1
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "GCGCAAATCGG", "Insert 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_insertions = 5
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "CGCGCATAAATCGCG", "Insert 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_insertions = 10
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "CGACGCTATATAATTCCGCG", "Insert 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+    def test_delete_changes(self):
+        """
+        Test various numbers of deletions.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.num_subs = 0
+        args.num_insertions = 0
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_deletions = 1
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "GCAAATCGG", "Delete 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_deletions = 5
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "CAACG", "Delete 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_deletions = 10
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "", "Delete 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+    def test_mutate_mix_changes(self):
+        """
+        Test a mix of substitutions, inserts, and deletes.  Also deliberately 
+        exceed the maximum allowed number of mutations.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_subs = 1
+        args.num_insertions = 1
+        args.num_deletions = 1
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "GCTAAAATCG", "Mutate mix 1,1,1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_subs = 2
+        args.num_insertions = 2
+        args.num_deletions = 2
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "TGCTCAACGC", "Mutate mix 2,2,2 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_subs = 3
+        args.num_insertions = 4
+        args.num_deletions = 3
+        mutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "CCTTAGTCAGC", "Mutate mix 3,4,3 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+        args.num_subs = 4
+        args.num_insertions = 4
+        args.num_deletions = 3
+        print "Deliberately causing an error here:"
+        with self.assertRaises(SystemExit):  # Verify exit if number of mutations exceeds sequence length
+            mutator.main(args)
 
     def tearDown(self):
-        #TempDirectory.cleanup_all()
+        """
+        Delete all the temporary directories and files created during this 
+        testing session.
+        """
+        os.remove("original_mutated_0.fasta")
+        os.remove("original_snpListMutated.txt")
+        TempDirectory.cleanup_all()
         pass
 
 if __name__ == '__main__':
