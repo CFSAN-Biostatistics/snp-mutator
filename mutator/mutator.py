@@ -47,25 +47,17 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
             print("Creating replicate %i" % replicate)
 
             def buildNewSeq():
-                newSeqDict = dict(seqDict)  
+                substitution_choices = {"A" : ["C", "T", "G"],
+                                        "C" : ["A", "T", "G"],
+                                        "T" : ["C", "A", "G"],
+                                        "G" : ["C", "T", "A"],
+                                        }
+                newSeqDict = dict(seqDict)
                 for i in subPositions:
                     state = seqDict[i]
-                    if state == "A":
-                        newState = str(random.choice(["C", "T", "G"], size = 1)[0])
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                    if state == "C":
-                        newState = str(random.choice(["A", "T", "G"], size = 1)[0])
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                    if state == "T":
-                        newState = str(random.choice(["C", "A", "G"], size = 1)[0])
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                    if state == "G":
-                        newState = str(random.choice(["C", "T", "A"], size = 1)[0])
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
+                    newState = random.choice(substitution_choices[state], size = 1)[0]
+                    newSeqDict[i] = newState
+                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
 
                 for i in deletionPositions:
                     state = seqDict[i]
