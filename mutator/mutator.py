@@ -49,47 +49,36 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
             def buildNewSeq():
                 newSeqDict = dict(seqDict)  
                 for i in subPositions:
-                    try:
-                        seqDict[i]
-                        state = seqDict[i]
-                        if state == "A":
-                            newState = str(random.choice(["C", "T", "G"], size = 1)[0])
-                            newSeqDict[i] = newState
-                            snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                        if state == "C":
-                            newState = str(random.choice(["A", "T", "G"], size = 1)[0])
-                            newSeqDict[i] = newState
-                            snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                        if state == "T":
-                            newState = str(random.choice(["C", "A", "G"], size = 1)[0])
-                            newSeqDict[i] = newState
-                            snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                        if state == "G":
-                            newState = str(random.choice(["C", "T", "A"], size = 1)[0])
-                            newSeqDict[i] = newState
-                            snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
-                    except:
-                        pass
+                    state = seqDict[i]
+                    if state == "A":
+                        newState = str(random.choice(["C", "T", "G"], size = 1)[0])
+                        newSeqDict[i] = newState
+                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
+                    if state == "C":
+                        newState = str(random.choice(["A", "T", "G"], size = 1)[0])
+                        newSeqDict[i] = newState
+                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
+                    if state == "T":
+                        newState = str(random.choice(["C", "A", "G"], size = 1)[0])
+                        newSeqDict[i] = newState
+                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
+                    if state == "G":
+                        newState = str(random.choice(["C", "T", "A"], size = 1)[0])
+                        newSeqDict[i] = newState
+                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
 
                 for i in deletionPositions:
-                    try:
-                        seqDict[i]
-                        state = seqDict[i]
-                        newState = ""
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_deletion\n") 
-                    except:
-                        pass
+                    state = seqDict[i]
+                    newState = ""
+                    newSeqDict[i] = newState
+                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_deletion\n") 
 
                 for i in insertionPositions:
-                    try:
-                        seqDict[i]
-                        state = seqDict[i]
-                        newState = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
-                        newSeqDict[i] = newState
-                        snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_insertion\n") 
-                    except:
-                        pass
+                    state = seqDict[i]
+                    newState = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
+                    newSeqDict[i] = newState
+                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_insertion\n") 
+
                 def writeNewSequence():
                     newSequence = []
                     with open(in_fileBase + "_mutated_" + str(replicate) + ".fasta", "w") as newFasta:
