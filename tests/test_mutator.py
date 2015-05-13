@@ -151,9 +151,7 @@ class TestMutator(unittest.TestCase):
         random.seed(1)
 
     def test_zero_changes(self):
-        """
-        Verify the output fasta file matches the input fasta file when zero
-        substitions, insertions, and deletions are requested.
+        """Verify the output fasta file matches the input fasta file when zero substitions, insertions, and deletions are requested.
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
@@ -170,8 +168,7 @@ class TestMutator(unittest.TestCase):
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
 
     def test_snp_changes(self):
-        """
-        Test various numbers of substitutions.
+        """Test various numbers of substitutions.
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
@@ -199,8 +196,7 @@ class TestMutator(unittest.TestCase):
         self.assertEqual(str(mutated_seq_record.seq), "AGTCTCGTAC", "SNP 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_insert_changes(self):
-        """
-        Test various numbers of insertions.
+        """Test various numbers of insertions.
         """
         
         directory = TempDirectory()
@@ -229,8 +225,7 @@ class TestMutator(unittest.TestCase):
         self.assertEqual(str(mutated_seq_record.seq), "CGACGCTATATAATTCCGCG", "Insert 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_delete_changes(self):
-        """
-        Test various numbers of deletions.
+        """Test various numbers of deletions.
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
@@ -258,9 +253,7 @@ class TestMutator(unittest.TestCase):
         self.assertEqual(str(mutated_seq_record.seq), "", "Delete 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_mutate_mix_changes(self):
-        """
-        Test a mix of substitutions, inserts, and deletes.  Also deliberately 
-        exceed the maximum allowed number of mutations.
+        """Test a mix of substitutions, inserts, and deletes.
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
@@ -290,18 +283,26 @@ class TestMutator(unittest.TestCase):
         mutator.main(args)
         mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CCTTAGTCAGC", "Mutate mix 3,4,3 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+            
+    def test_too_many_mutations(self):
+        """Deliberately exceed the maximum allowed number of mutations.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.random_seed = 1
+        args.summary_file = None
 
         args.num_subs = 4
         args.num_insertions = 4
         args.num_deletions = 3
-        print "Deliberately causing an error here:"
         with self.assertRaises(SystemExit):  # Verify exit if number of mutations exceeds sequence length
             mutator.main(args)
             
     def test_not_all_same(self):
-        """
-        Verify Mutator creates different mutated fasta files when generating m
-        more than one.
+        """Verify Mutator creates different mutated fasta files when generating more than one.
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
