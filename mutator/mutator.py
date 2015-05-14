@@ -8,37 +8,53 @@ from numpy import random
 
 
 ### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
-seqString = []
-seqDict = {}
-seqName = []
-seqLength = []
 
-def getSequence(in_file):
-    with open(in_file, "r") as inFile:
-        for idx, line in enumerate(inFile):
+def read_fasta_sequence(fasta_file_path):
+    """
+    Read a fasta file and return the sequence in an object indexed by position
+    with one string containing one DNA base per index position.
+
+    Parameters
+    ----------
+    fasta_file_path : str
+        Path to the fasta file to read.
+
+    Returns
+    -------
+    seq_name : str
+        The fasta description of the first sequence in the file only.
+    sequence : array-like
+        The sequence in an object indexed by position with one string 
+        containing one base per index position initially, but capable of 
+        containing zero or more bases per position. NOTE: if the fast file
+        contains multiple sequences, all the sequenced are combined.
+    """
+    seq_string = []
+    with open(fasta_file_path, "r") as file:
+        for idx, line in enumerate(file):
             if idx == 0:
-                seqName.append(line.strip(">").strip("\n"))
+                seq_name = line.strip(">").strip("\n")
             elif ">" in line:
                 pass
             else:
-                seqString.append(line.strip("\n"))
+                seq_string.append(line.strip("\n"))
 
-
-def buildSeqDict(seqString):
-    seq = "".join(seqString)
-    seqLength.append(len(seq))
+    seq = "".join(seq_string)
+    seq_dict = {}
     for idx, i in enumerate(seq):
-        seqDict[idx]= i
+        seq_dict[idx]= i
+    return (seq_name, seq_dict)
 
 
 
 ### Run simulations to get mutated genome
-def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDict, ranSeed):
+def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, seqDict, ranSeed):
+    seq_length = len(seqDict)
     with open(in_fileBase + "_snpListMutated.txt", "w") as snpList:
         snpList.write("replicate\tposition\toriginalBase\tnewBase\n")
 
         for replicate in range(0, numSims):  
-            positions = random.choice(range(0, seqLength[0]), size=int(numSubs + numDels + numInsertions), replace=False)
+            positions = random.choice(range(0, seq_length), size=int(numSubs + numDels + numInsertions), replace=False)
             subPositions = positions[:numSubs]
             deletionPositions = positions[numSubs:(numSubs + numDels)]
             insertionPositions = positions[(numSubs + numDels):len(positions)]
@@ -74,7 +90,7 @@ def runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDic
                 def writeNewSequence():
                     newSequence = []
                     with open(in_fileBase + "_mutated_" + str(replicate) + ".fasta", "w") as newFasta:
-                        newFasta.write(">" + seqName[0] + "\n")
+                        newFasta.write(">" + seq_name + "\n")
                         for key, value in newSeqDict.items():
                             newSequence.append(value)   
                         newFasta.write("".join(newSequence))
@@ -107,17 +123,6 @@ def parse_arguments(system_args):
 def main(args):
     """
     """
-    # TODO: remove these globals
-    global seqLength
-    global seqDict
-    global seqName
-    global seqString
-    seqLength = []
-    seqDict = {}
-    seqName = []
-    seqString = []
-    
-    
     # Input file arg
     in_file = args.input_fasta_file
     in_file_name = os.path.basename(in_file)
@@ -138,15 +143,15 @@ def main(args):
     random.seed(ranSeed)
     
     # Read the reference and generate mutations
-    getSequence(in_file)
-    buildSeqDict(seqString)
+    seq_name, indexed_sequence = read_fasta_sequence(in_file)
+    seq_length = len(indexed_sequence)
     
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
-    if num_mutations > seqLength[0]:
+    if num_mutations > seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
     
-    runSimulations(in_fileBase, numSims, numSubs, numDels, numInsertions, seqDict, ranSeed)
+    runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, indexed_sequence, ranSeed)
 
 
 if __name__ == '__main__':
