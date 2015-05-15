@@ -71,20 +71,20 @@ def write_fasta_sequence(seq_id, file_path, sequence_list):
 
 
 ### Run simulations to get mutated genome
-def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, seq_str, ranSeed):
+def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num_insertions, seq_str):
     seq_length = len(seq_str)
-    with open(in_fileBase + "_snpListMutated.txt", "w") as snpList:
-        snpList.write("replicate\tposition\toriginalBase\tnewBase\n")
+    with open(in_fileBase + "_snpListMutated.txt", "w") as snp_list_file:
+        snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
-        for replicate in range(0, numSims):  
-            positions = random.choice(range(0, seq_length), size=int(numSubs + numDels + numInsertions), replace=False)
-            subPositions = positions[:numSubs]
-            deletionPositions = positions[numSubs:(numSubs + numDels)]
-            insertionPositions = positions[(numSubs + numDels):len(positions)]
+        for replicate in range(0, num_sims):  
+            positions = random.choice(range(0, seq_length), size=num_subs + num_deletions + num_insertions, replace=False)
+            sub_positions = positions[: num_subs]
+            deletion_positions = positions[num_subs : (num_subs + num_deletions)]
+            insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
 
             print("Creating replicate %i" % replicate)
 
-            def buildNewSeq():
+            def build_new_seq():
                 """
                 Create a copy of the sequence and mutate sites that were 
                 identified in the previous step
@@ -95,31 +95,31 @@ def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertio
                                         "G" : ["C", "T", "A"],
                                         }
                 new_indexed_seq = list(seq_str)
-                for i in subPositions:
+                for i in sub_positions:
                     state = seq_str[i]
-                    newState = random.choice(substitution_choices[state], size = 1)[0]
-                    new_indexed_seq[i] = newState
-                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
+                    new_state = random.choice(substitution_choices[state], size = 1)[0]
+                    new_indexed_seq[i] = new_state
+                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "\n") 
 
-                for i in deletionPositions:
+                for i in deletion_positions:
                     state = seq_str[i]
-                    newState = ""
-                    new_indexed_seq[i] = newState
-                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_deletion\n") 
+                    new_state = ""
+                    new_indexed_seq[i] = new_state
+                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "_deletion\n") 
 
-                for i in insertionPositions:
+                for i in insertion_positions:
                     state = seq_str[i]
-                    newState = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
-                    new_indexed_seq[i] = newState
-                    snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_insertion\n") 
+                    new_state = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
+                    new_indexed_seq[i] = new_state
+                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "_insertion\n") 
                     
                 return new_indexed_seq
 
             if ENABLE_TIMING_TEST:
-                t = Timer(lambda: buildNewSeq())
-                print("Min buildNewSeq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
+                t = Timer(lambda: build_new_seq())
+                print("Min build_new_seq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
 
-            new_indexed_seq = buildNewSeq()
+            new_indexed_seq = build_new_seq()
             
             
             if ENABLE_TIMING_TEST:
@@ -163,12 +163,6 @@ def main(args):
     if args.summary_file:
         summary_file = os.path.abspath(args.summary_file)
     
-    # Get number of simulations, substitutions and indels
-    numSims = args.num_sims
-    numSubs = args.num_subs
-    numInsertions = args.num_insertions
-    numDels = args.num_deletions
-    
     # Random seed option
     ranSeed = args.random_seed
     random.seed(ranSeed)
@@ -177,15 +171,15 @@ def main(args):
     if ENABLE_TIMING_TEST:
         t = Timer(lambda: read_fasta_sequence(in_file))
         print("Min Read Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
-    seq_name, indexed_sequence = read_fasta_sequence(in_file)
-    seq_length = len(indexed_sequence)
+    seq_name, seq_str = read_fasta_sequence(in_file)
+    seq_length = len(seq_str)
     
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
     if num_mutations > seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
     
-    runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, indexed_sequence, ranSeed)
+    runSimulations(in_fileBase, seq_name, args.num_sims, args.num_subs, args.num_deletions, args.num_insertions, seq_str)
 
 
 if __name__ == '__main__':
