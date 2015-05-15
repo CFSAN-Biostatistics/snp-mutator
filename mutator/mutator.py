@@ -5,14 +5,17 @@ import argparse
 import sys
 import os.path
 from numpy import random
+from timeit import Timer
 
+
+TIMING_RUNS = 10
+ENABLE_TIMING_TEST = False
 
 ### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
 
 def read_fasta_sequence(fasta_file_path):
     """
-    Read a fasta file and return the sequence in an object indexed by position
-    with one string containing one DNA base per index position.
+    Read a fasta file and return the sequence as a string.
 
     Parameters
     ----------
@@ -23,11 +26,10 @@ def read_fasta_sequence(fasta_file_path):
     -------
     seq_name : str
         The fasta description of the first sequence in the file only.
-    sequence : array-like
-        The sequence in an object indexed by position with one string 
-        containing one base per index position initially, but capable of 
-        containing zero or more bases per position. NOTE: if the fast file
-        contains multiple sequences, all the sequenced are combined.
+    sequence : str
+        Sequence string. 
+        Note: if the fast file contains multiple sequences, all the sequences
+        are combined into a single string.
     """
     seq_string = []
     with open(fasta_file_path, "r") as file:
@@ -39,17 +41,19 @@ def read_fasta_sequence(fasta_file_path):
             else:
                 seq_string.append(line.strip("\n"))
 
-    seq = "".join(seq_string)
-    seq_dict = {}
-    for idx, i in enumerate(seq):
-        seq_dict[idx]= i
-    return (seq_name, seq_dict)
+    seq_str = "".join(seq_string)
+    return (seq_name, seq_str)
 
+
+def write_fasta_sequence(seq_name, file_path, sequence_list):
+    with open(file_path, "w") as file:
+        file.write(">" + seq_name + "\n")
+        file.write("".join(sequence_list))
 
 
 ### Run simulations to get mutated genome
-def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, seqDict, ranSeed):
-    seq_length = len(seqDict)
+def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertions, seq_str, ranSeed):
+    seq_length = len(seq_str)
     with open(in_fileBase + "_snpListMutated.txt", "w") as snpList:
         snpList.write("replicate\tposition\toriginalBase\tnewBase\n")
 
@@ -59,43 +63,51 @@ def runSimulations(in_fileBase, seq_name, numSims, numSubs, numDels, numInsertio
             deletionPositions = positions[numSubs:(numSubs + numDels)]
             insertionPositions = positions[(numSubs + numDels):len(positions)]
 
-### Create a copy of the sequence dictionary and mutate sites that were identified in the previous step
             print("Creating replicate %i" % replicate)
 
             def buildNewSeq():
+                """
+                Create a copy of the sequence and mutate sites that were 
+                identified in the previous step
+                """
                 substitution_choices = {"A" : ["C", "T", "G"],
                                         "C" : ["A", "T", "G"],
                                         "T" : ["C", "A", "G"],
                                         "G" : ["C", "T", "A"],
                                         }
-                newSeqDict = dict(seqDict)
+                new_indexed_seq = list(seq_str)
                 for i in subPositions:
-                    state = seqDict[i]
+                    state = seq_str[i]
                     newState = random.choice(substitution_choices[state], size = 1)[0]
-                    newSeqDict[i] = newState
+                    new_indexed_seq[i] = newState
                     snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "\n") 
 
                 for i in deletionPositions:
-                    state = seqDict[i]
+                    state = seq_str[i]
                     newState = ""
-                    newSeqDict[i] = newState
+                    new_indexed_seq[i] = newState
                     snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_deletion\n") 
 
                 for i in insertionPositions:
-                    state = seqDict[i]
+                    state = seq_str[i]
                     newState = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
-                    newSeqDict[i] = newState
+                    new_indexed_seq[i] = newState
                     snpList.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + newState + "_insertion\n") 
+                    
+                return new_indexed_seq
 
-                def writeNewSequence():
-                    newSequence = []
-                    with open(in_fileBase + "_mutated_" + str(replicate) + ".fasta", "w") as newFasta:
-                        newFasta.write(">" + seq_name + "\n")
-                        for key, value in newSeqDict.items():
-                            newSequence.append(value)   
-                        newFasta.write("".join(newSequence))
-                writeNewSequence()
-            buildNewSeq()
+            if ENABLE_TIMING_TEST:
+                t = Timer(lambda: buildNewSeq())
+                print("Min buildNewSeq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
+
+            new_indexed_seq = buildNewSeq()
+            
+            
+            if ENABLE_TIMING_TEST:
+                t = Timer(lambda: write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq))
+                print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
+            
+            write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
             
             
 def parse_arguments(system_args):
@@ -143,6 +155,9 @@ def main(args):
     random.seed(ranSeed)
     
     # Read the reference and generate mutations
+    if ENABLE_TIMING_TEST:
+        t = Timer(lambda: read_fasta_sequence(in_file))
+        print("Min Read Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
     seq_name, indexed_sequence = read_fasta_sequence(in_file)
     seq_length = len(indexed_sequence)
     
