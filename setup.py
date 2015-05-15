@@ -15,11 +15,11 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    # TODO: put package requirements here
+    'numpy',
+    'Biopython',
 ]
 
 test_requirements = [
-    'Biopython',
     'testfixtures',
 ]
 

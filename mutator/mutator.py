@@ -6,9 +6,14 @@ import sys
 import os.path
 from numpy import random
 from timeit import Timer
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio import SeqIO
 
 
-TIMING_RUNS = 10
+# Performance timing can be performed by enabling the timing test and
+# running from the command line.
+TIMING_RUNS = 10  # larger values give more accurate results
 ENABLE_TIMING_TEST = False
 
 ### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
@@ -45,10 +50,24 @@ def read_fasta_sequence(fasta_file_path):
     return (seq_name, seq_str)
 
 
-def write_fasta_sequence(seq_name, file_path, sequence_list):
-    with open(file_path, "w") as file:
-        file.write(">" + seq_name + "\n")
-        file.write("".join(sequence_list))
+def write_fasta_sequence(seq_id, file_path, sequence_list):
+    """
+    Write the mutated sequence to a fasta file.
+    
+    Parameters
+    ----------
+    seq_id : str
+        ID of the sequence which will be written to the fasta description line.
+    file_path : str
+        Path to the fasta file to write.  An existing file will be overwritten.
+    sequence_list : list of str
+        List of sequence fragments which may be 0 or more bases.  The fragments
+        are concatenated before writing to the fast a file.
+    """
+    seq_str = "".join(sequence_list)
+    seq = Seq(seq_str)
+    record = SeqRecord(seq, id=seq_id, description="")
+    SeqIO.write([record], file_path, "fasta")
 
 
 ### Run simulations to get mutated genome
