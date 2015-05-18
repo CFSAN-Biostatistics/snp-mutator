@@ -134,13 +134,15 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
     return (new_indexed_seq, subs_positions, deletion_positions, insertion_positions)
 
 
-def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num_insertions, seq_str):
+def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_deletions, num_insertions):
     """
     Generate multiple random mutations of a reference sequence.
     
     Parameters
     ----------
-    in_fileBase : str
+    seq_str : str
+        Original sequence string.
+    base_file_name : str
         The base file name of the original reference with the extension 
         removed.  This will be the file name prefix of the generated mutated 
         files.
@@ -155,10 +157,8 @@ def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num
     num_insertions : int
         Number of base insertions to make.  Insertions are placed before the
         original base at positions having insertions.
-    seq_str : str
-        Original sequence string.
     """
-    with open(in_fileBase + "_snpListMutated.txt", "w") as snp_list_file:
+    with open(base_file_name + "_snpListMutated.txt", "w") as snp_list_file:
         snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
         for replicate in range(0, num_sims):  
@@ -172,10 +172,10 @@ def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num
                 build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions)
            
             if ENABLE_TIMING_TEST:
-                t = Timer(lambda: write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq))
+                t = Timer(lambda: write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq))
                 print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
             
-            write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
+            write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
 
             for pos in subs_positions:
                 snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos]))
@@ -236,15 +236,14 @@ def main(args):
     # Input file arg
     in_file = args.input_fasta_file
     in_file_name = os.path.basename(in_file)
-    in_fileBase, in_fileExt = os.path.splitext(in_file_name)
+    base_file_name, in_fileExt = os.path.splitext(in_file_name)
     
     # Summary arg
     if args.summary_file:
         summary_file = os.path.abspath(args.summary_file)
     
     # Random seed option
-    ranSeed = args.random_seed
-    random.seed(ranSeed)
+    random.seed(args.random_seed)
     
     # Read the reference and generate mutations
     if ENABLE_TIMING_TEST:
@@ -258,7 +257,7 @@ def main(args):
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
     
-    runSimulations(in_fileBase, seq_name, args.num_sims, args.num_subs, args.num_deletions, args.num_insertions, seq_str)
+    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, args.num_deletions, args.num_insertions)
 
 
 if __name__ == '__main__':
