@@ -134,7 +134,7 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
     return (new_indexed_seq, subs_positions, deletion_positions, insertion_positions)
 
 
-def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_deletions, num_insertions):
+def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_deletions, num_insertions, summary_file_path=None):
     """
     Generate multiple random mutations of a reference sequence.
     
@@ -157,17 +157,24 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_d
     num_insertions : int
         Number of base insertions to make.  Insertions are placed before the
         original base at positions having insertions.
+    summary_file_path : str, optional
+        Path to summary file where a list of positions and corresponding 
+        mutations will be written.
     """
-    with open(base_file_name + "_snpListMutated.txt", "w") as snp_list_file:
-        snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
+    if summary_file_path:
+        snp_list_file = open(summary_file_path, "w")
+        
+    try:
+        if summary_file_path:
+            snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
         for replicate in range(0, num_sims):  
             print("Creating replicate %i" % replicate)
-
+    
             if ENABLE_TIMING_TEST:
                 t = Timer(lambda: build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions))
                 print("Min build_new_seq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
-
+    
             new_indexed_seq, subs_positions, deletion_positions, insertion_positions = \
                 build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions)
            
@@ -176,13 +183,17 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_d
                 print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
             
             write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
-
-            for pos in subs_positions:
-                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos]))
-            for pos in deletion_positions:
-                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], "_deletion"))
-            for pos in insertion_positions:
-                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos] + "_insertion"))
+    
+            if summary_file_path:
+                for pos in subs_positions:
+                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos]))
+                for pos in deletion_positions:
+                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], "_deletion"))
+                for pos in insertion_positions:
+                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos] + "_insertion"))
+    finally:
+        if summary_file_path:
+            snp_list_file.close()
             
             
 def parse_arguments(system_args):
@@ -238,10 +249,6 @@ def main(args):
     in_file_name = os.path.basename(in_file_path)
     base_file_name, in_fileExt = os.path.splitext(in_file_name)
     
-    # Summary arg
-    if args.summary_file:
-        summary_file = os.path.abspath(args.summary_file)
-    
     # Random seed option
     random.seed(args.random_seed)
     
@@ -257,7 +264,9 @@ def main(args):
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
     
-    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, args.num_deletions, args.num_insertions)
+    
+    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, 
+                    args.num_deletions, args.num_insertions, args.summary_file)
 
 
 if __name__ == '__main__':

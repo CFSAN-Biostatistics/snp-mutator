@@ -322,6 +322,30 @@ class TestMutator(unittest.TestCase):
         self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
         self.assertNotEqual(str(mutated_seq_record0.seq), str(mutated_seq_record2.seq), "Generated sequences 0 and 2 should be different.")
 
+    def test_summary_creation(self):
+        """Verify the summary file is created if and only if requested.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.num_subs = 0
+        args.num_insertions = 0
+        args.num_deletions = 0
+        args.random_seed = 1
+
+        args.summary_file = None
+        mutator.main(args)
+        summary_file_exists = os.path.exists("original_snpListMutated.txt")
+        self.assertFalse(summary_file_exists, "The summary file should not exist when not explicitly requested")
+
+        args.summary_file = "original_snpListMutated.txt"
+        mutator.main(args)
+        summary_file_exists = os.path.exists("original_snpListMutated.txt")
+        self.assertTrue(summary_file_exists, "The summary file is missing when requested.")
+
+
     def tearDown(self):
         """
         Delete all the temporary directories and files created during this 
