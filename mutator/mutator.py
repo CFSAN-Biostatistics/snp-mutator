@@ -70,63 +70,71 @@ def write_fasta_sequence(seq_id, file_path, sequence_list):
     SeqIO.write([record], file_path, "fasta")
 
 
+def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
+    """
+    Copy a sequence and randomly introduce the specified numbers of
+    substitutions, insertions, and deletions.
+    """
+    substitution_choices = {"A" : ["C", "T", "G"],
+                            "C" : ["A", "T", "G"],
+                            "T" : ["C", "A", "G"],
+                            "G" : ["C", "T", "A"],
+                            }
+
+    seq_length = len(seq_str)
+    num_mutations = num_subs + num_deletions + num_insertions
+    positions = random.choice(seq_length, size=num_mutations, replace=False)
+    subs_positions = positions[: num_subs]
+    deletion_positions = positions[num_subs : (num_subs + num_deletions)]
+    insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
+
+    # Copy the original sequence in a way that easily allows mutations
+    # while preserving position information
+    new_indexed_seq = list(seq_str)
+
+    for i in subs_positions:
+        original_base = seq_str[i]
+        new_base = random.choice(substitution_choices[original_base], size=1)[0]
+        new_indexed_seq[i] = new_base
+
+    for i in deletion_positions:
+        new_indexed_seq[i] = ""
+
+    for i in insertion_positions:
+        original_base = seq_str[i]
+        insert_base = random.choice(["A", "C", "T", "G"], size=1)[0]
+        new_indexed_seq[i] = insert_base + original_base
+
+    return (new_indexed_seq, subs_positions, deletion_positions, insertion_positions)
+
+
 ### Run simulations to get mutated genome
 def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num_insertions, seq_str):
-    seq_length = len(seq_str)
     with open(in_fileBase + "_snpListMutated.txt", "w") as snp_list_file:
         snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
         for replicate in range(0, num_sims):  
-            positions = random.choice(range(0, seq_length), size=num_subs + num_deletions + num_insertions, replace=False)
-            sub_positions = positions[: num_subs]
-            deletion_positions = positions[num_subs : (num_subs + num_deletions)]
-            insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
-
             print("Creating replicate %i" % replicate)
 
-            def build_new_seq():
-                """
-                Create a copy of the sequence and mutate sites that were 
-                identified in the previous step
-                """
-                substitution_choices = {"A" : ["C", "T", "G"],
-                                        "C" : ["A", "T", "G"],
-                                        "T" : ["C", "A", "G"],
-                                        "G" : ["C", "T", "A"],
-                                        }
-                new_indexed_seq = list(seq_str)
-                for i in sub_positions:
-                    state = seq_str[i]
-                    new_state = random.choice(substitution_choices[state], size = 1)[0]
-                    new_indexed_seq[i] = new_state
-                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "\n") 
-
-                for i in deletion_positions:
-                    state = seq_str[i]
-                    new_state = ""
-                    new_indexed_seq[i] = new_state
-                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "_deletion\n") 
-
-                for i in insertion_positions:
-                    state = seq_str[i]
-                    new_state = str(random.choice(["A", "C", "T", "G"], size = 1)[0]) + state
-                    new_indexed_seq[i] = new_state
-                    snp_list_file.write(str(replicate) + "\t" + str(i + 1) + "\t" + state + "\t" + new_state + "_insertion\n") 
-                    
-                return new_indexed_seq
-
             if ENABLE_TIMING_TEST:
-                t = Timer(lambda: build_new_seq())
+                t = Timer(lambda: build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions))
                 print("Min build_new_seq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
 
-            new_indexed_seq = build_new_seq()
-            
-            
+            new_indexed_seq, subs_positions, deletion_positions, insertion_positions = \
+                build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions)
+           
             if ENABLE_TIMING_TEST:
                 t = Timer(lambda: write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq))
                 print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
             
             write_fasta_sequence(seq_name, in_fileBase + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
+
+            for pos in subs_positions:
+                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos]))
+            for pos in deletion_positions:
+                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], "_deletion"))
+            for pos in insertion_positions:
+                snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos] + "_insertion"))
             
             
 def parse_arguments(system_args):
