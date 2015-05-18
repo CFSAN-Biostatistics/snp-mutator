@@ -234,8 +234,8 @@ def main(args):
     parse_arguments()
     """
     # Input file arg
-    in_file = args.input_fasta_file
-    in_file_name = os.path.basename(in_file)
+    in_file_path = args.input_fasta_file
+    in_file_name = os.path.basename(in_file_path)
     base_file_name, in_fileExt = os.path.splitext(in_file_name)
     
     # Summary arg
@@ -247,9 +247,9 @@ def main(args):
     
     # Read the reference and generate mutations
     if ENABLE_TIMING_TEST:
-        t = Timer(lambda: read_fasta_sequence(in_file))
+        t = Timer(lambda: read_fasta_sequence(in_file_path))
         print("Min Read Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
-    seq_name, seq_str = read_fasta_sequence(in_file)
+    seq_name, seq_str = read_fasta_sequence(in_file_path)
     seq_length = len(seq_str)
     
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
