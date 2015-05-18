@@ -16,7 +16,6 @@ from Bio import SeqIO
 TIMING_RUNS = 10  # larger values give more accurate results
 ENABLE_TIMING_TEST = False
 
-### Read in reference and build dictionary - I originally used SeqIO.parse but went this route to account for a references with more than one contig
 
 def read_fasta_sequence(fasta_file_path):
     """
@@ -52,8 +51,8 @@ def read_fasta_sequence(fasta_file_path):
 
 def write_fasta_sequence(seq_id, file_path, sequence_list):
     """
-    Write the mutated sequence to a fasta file.
-    
+    Write a mutated sequence to a fasta file.
+
     Parameters
     ----------
     seq_id : str
@@ -74,6 +73,33 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
     """
     Copy a sequence and randomly introduce the specified numbers of
     substitutions, insertions, and deletions.
+
+    Parameters
+    ----------
+    seq_str : str
+        Sequence string.
+    num_subs : int
+        Number of base substitutions to make.
+    num_deletions : int
+        Number of base deletions to make.
+    num_insertions : int
+        Number of base insertions to make.  Insertions are placed before the
+        original base at positions having insertions.
+        
+    Returns
+    -------
+    new_indexed_seq : list of str
+        List indexed by original position containing strings of bases.  Each
+        string can be 0 - 2 bases long, where a zero length string indicates
+        a deletion at the postion, a string containing a single base indicates
+        no mutation at the position, and a string containing two bases 
+        indicates an insertion prior to the original base at the position.
+    subs_positions : array of int
+        Array of positions where substitions are introduced.
+    deletion_positions : array of int
+        Array of positions where bases are deleted.
+    insertion_positions : array of int
+        Array of positions where insertions are introduced.
     """
     substitution_choices = {"A" : ["C", "T", "G"],
                             "C" : ["A", "T", "G"],
@@ -108,8 +134,30 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
     return (new_indexed_seq, subs_positions, deletion_positions, insertion_positions)
 
 
-### Run simulations to get mutated genome
 def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num_insertions, seq_str):
+    """
+    Generate multiple random mutations of a reference sequence.
+    
+    Parameters
+    ----------
+    in_fileBase : str
+        The base file name of the original reference with the extension 
+        removed.  This will be the file name prefix of the generated mutated 
+        files.
+    seq_name : str
+        ID of the sequence which will be written to the fasta description line.
+    num_sims : int
+        Number of mutated sequenced to generate.
+    num_subs : int
+        Number of base substitutions to make.
+    num_deletions : int
+        Number of base deletions to make.
+    num_insertions : int
+        Number of base insertions to make.  Insertions are placed before the
+        original base at positions having insertions.
+    seq_str : str
+        Original sequence string.
+    """
     with open(in_fileBase + "_snpListMutated.txt", "w") as snp_list_file:
         snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
@@ -139,6 +187,17 @@ def runSimulations(in_fileBase, seq_name, num_sims, num_subs, num_deletions, num
             
 def parse_arguments(system_args):
     """
+    Parse command line arguments.
+    
+    Parameters
+    ----------
+    system_args : list
+        List of command line arguments, usually sys.argv.
+        
+    Returns
+    -------
+    Namespace
+        Command line arguments are stored as attributes of a Namespace.
     """
     usage = """Generate mutated sequence files from a reference genome.  Takes a fasta file and creates 
                a specified number of randomly generated base substitutions, insertions, and deletions.  
@@ -161,6 +220,18 @@ def parse_arguments(system_args):
 
 def main(args):
     """
+    Generate multiple random mutations of a reference sequence.
+
+    Parameters
+    ----------
+    args : Namespace
+        Command line arguments stored as attributes of a Namespace, usually
+        parsed from sys.argv, but can be set programmatically for unit testing
+        or other purposes.
+        
+    See Also
+    --------
+    parse_arguments()
     """
     # Input file arg
     in_file = args.input_fasta_file
