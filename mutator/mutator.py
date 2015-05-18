@@ -185,12 +185,13 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_d
             write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
     
             if summary_file_path:
-                for pos in subs_positions:
-                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos]))
-                for pos in deletion_positions:
-                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], "_deletion"))
-                for pos in insertion_positions:
-                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], new_indexed_seq[pos] + "_insertion"))
+                summary_list = list()
+                summary_list.extend([(pos, new_indexed_seq[pos]) for pos in subs_positions])
+                summary_list.extend([(pos, "_deletion") for pos in deletion_positions])
+                summary_list.extend([(pos, new_indexed_seq[pos] + "_insertion") for pos in insertion_positions])
+                for pos, change in sorted(summary_list):
+                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], change))
+    
     finally:
         if summary_file_path:
             snp_list_file.close()
