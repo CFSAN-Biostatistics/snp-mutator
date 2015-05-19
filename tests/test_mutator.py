@@ -338,8 +338,9 @@ class TestMutator(unittest.TestCase):
         args.num_subs = 4
         args.num_insertions = 4
         args.num_deletions = 3
-        with self.assertRaises(SystemExit):  # Verify exit if number of mutations exceeds sequence length
-            mutator.main(args)
+        # Verify exit if number of mutations exceeds sequence length
+        self.assertRaises(SystemExit, mutator.main, args)
+            
             
     def test_not_all_same(self):
         """Verify Mutator creates different mutated fasta files when generating more than one.

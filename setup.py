@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 
 try:
     from setuptools import setup
@@ -18,6 +19,10 @@ requirements = [
     'numpy',
     'Biopython',
 ]
+
+# Below needed for Python 2.6
+if sys.version_info < (2,7,):
+    requirements.append('argparse')
 
 test_requirements = [
     'testfixtures',
