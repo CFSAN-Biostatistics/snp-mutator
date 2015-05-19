@@ -11,12 +11,6 @@ from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 
 
-# Performance timing can be performed by enabling the timing test and
-# running from the command line.
-TIMING_RUNS = 10  # larger values give more accurate results
-ENABLE_TIMING_TEST = False
-
-
 def read_fasta_sequence(fasta_file_path):
     """
     Read a fasta file and return the sequence as a string.
@@ -177,18 +171,10 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
         for replicate in range(0, num_sims):  
             print("Creating replicate %i" % replicate)
     
-            if ENABLE_TIMING_TEST:
-                t = Timer(lambda: build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions, ))
-                print("Min build_new_seq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
-    
             new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
                 build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions)
            
             mutations = (num_subs, num_insertions, num_deletions)
-            if ENABLE_TIMING_TEST:
-                t = Timer(lambda: write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations))
-                print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
-            
             write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations)
     
             if summary_file_path:
@@ -261,9 +247,6 @@ def main(args):
     random.seed(args.random_seed)
     
     # Read the reference and generate mutations
-    if ENABLE_TIMING_TEST:
-        t = Timer(lambda: read_fasta_sequence(in_file_path))
-        print("Min Read Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
     seq_name, seq_str = read_fasta_sequence(in_file_path)
     seq_length = len(seq_str)
     
@@ -271,7 +254,6 @@ def main(args):
     if num_mutations > seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
-    
     
     run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, 
                     args.num_insertions, args.num_deletions, args.summary_file)
