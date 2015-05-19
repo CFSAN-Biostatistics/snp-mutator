@@ -145,6 +145,46 @@ def compare_fasta_files(file_path1, file_path2):
             return all(r1.__dict__ == r2.__dict__ for r1, r2 in paired_records)
 
 
+def compare_mutated_fasta_files(original_file_path, mutated_file_path):
+    """
+    Determine if two fasta files have equivalent contents after running a 
+    zero count mutation on the original file.  The files will not be identical.  
+    The fasta defline will differ in the description suffix and the sequence 
+    lines may have different lengths.
+
+    Parameters
+    ----------
+    original_file_path : str
+        Path to the original fasta file.
+    mutated_file_path : str
+        Path to the mutated fasta file.
+        
+    Returns
+    -------
+    bool
+        True if the two fasta files are equivalent, False otherwise.
+    """
+    with open(original_file_path) as handle1:
+        with open(mutated_file_path) as handle2:
+            iter1 = SeqIO.parse(handle1, 'fasta')
+            iter2 = SeqIO.parse(handle2, 'fasta')
+            fillvalue = object()
+            paired_records = izip_longest(iter1, iter2, fillvalue=fillvalue)
+            for r1, r2 in paired_records:
+                if type(r1) != type(r2):
+                    return False
+                if r1.id != r2.id:
+                    return False
+                if r1.name != r2.name:
+                    return False
+                if r1.seq != r2.seq:
+                    return False
+                if not r2.description.startswith(r1.description):
+                    return False
+    return True
+                
+
+
 class TestMutator(unittest.TestCase):
 
     def setUp(self):
@@ -164,7 +204,7 @@ class TestMutator(unittest.TestCase):
         args.random_seed = 1
         args.summary_file = None
         mutator.main(args)
-        no_change = compare_fasta_files(original_file_path, "original_mutated_0.fasta")
+        no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_0.fasta")
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
 
     def test_snp_changes(self):

@@ -49,9 +49,11 @@ def read_fasta_sequence(fasta_file_path):
     return (seq_name, seq_str)
 
 
-def write_fasta_sequence(seq_id, file_path, sequence_list):
+def write_fasta_sequence(seq_id, file_path, sequence_list, mutations):
     """
-    Write a mutated sequence to a fasta file.
+    Write a mutated sequence to a fasta file.  The fasta defline is suffixed 
+    with a mutation description of the form (mutated s=100 i=20 d=20) 
+    describing the number of substitutions, insertions, and deletions.
 
     Parameters
     ----------
@@ -62,14 +64,18 @@ def write_fasta_sequence(seq_id, file_path, sequence_list):
     sequence_list : list of str
         List of sequence fragments which may be 0 or more bases.  The fragments
         are concatenated before writing to the fast a file.
+    mutations : tuple
+        3-tuple of number of substitutions, insertions, and deletions in that 
+        order.  The mutation counts are appended to the fasta defline.
     """
     seq_str = "".join(sequence_list)
     seq = Seq(seq_str)
-    record = SeqRecord(seq, id=seq_id, description="")
+    description = "(mutated s=%i i=%i d=%i)" % mutations
+    record = SeqRecord(seq, id=seq_id, description=description)
     SeqIO.write([record], file_path, "fasta")
 
 
-def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
+def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
     """
     Copy a sequence and randomly introduce the specified numbers of
     substitutions, insertions, and deletions.
@@ -80,26 +86,26 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
         Sequence string.
     num_subs : int
         Number of base substitutions to make.
-    num_deletions : int
-        Number of base deletions to make.
     num_insertions : int
         Number of base insertions to make.  Insertions are placed before the
         original base at positions having insertions.
+    num_deletions : int
+        Number of base deletions to make.
         
     Returns
     -------
     new_indexed_seq : list of str
         List indexed by original position containing strings of bases.  Each
         string can be 0 - 2 bases long, where a zero length string indicates
-        a deletion at the postion, a string containing a single base indicates
+        a deletion at the position, a string containing a single base indicates
         no mutation at the position, and a string containing two bases 
         indicates an insertion prior to the original base at the position.
     subs_positions : array of int
         Array of positions where substitions are introduced.
-    deletion_positions : array of int
-        Array of positions where bases are deleted.
     insertion_positions : array of int
         Array of positions where insertions are introduced.
+    deletion_positions : array of int
+        Array of positions where bases are deleted.
     """
     substitution_choices = {"A" : ["C", "T", "G"],
                             "C" : ["A", "T", "G"],
@@ -131,10 +137,10 @@ def build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions):
         insert_base = random.choice(["A", "C", "T", "G"], size=1)[0]
         new_indexed_seq[i] = insert_base + original_base
 
-    return (new_indexed_seq, subs_positions, deletion_positions, insertion_positions)
+    return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_deletions, num_insertions, summary_file_path=None):
+def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
     """
     Generate multiple random mutations of a reference sequence.
     
@@ -152,11 +158,11 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_d
         Number of mutated sequenced to generate.
     num_subs : int
         Number of base substitutions to make.
-    num_deletions : int
-        Number of base deletions to make.
     num_insertions : int
         Number of base insertions to make.  Insertions are placed before the
         original base at positions having insertions.
+    num_deletions : int
+        Number of base deletions to make.
     summary_file_path : str, optional
         Path to summary file where a list of positions and corresponding 
         mutations will be written.
@@ -172,23 +178,24 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_d
             print("Creating replicate %i" % replicate)
     
             if ENABLE_TIMING_TEST:
-                t = Timer(lambda: build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions))
+                t = Timer(lambda: build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions, ))
                 print("Min build_new_seq Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
     
-            new_indexed_seq, subs_positions, deletion_positions, insertion_positions = \
-                build_mutated_seq(seq_str, num_subs, num_deletions, num_insertions)
+            new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
+                build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions)
            
+            mutations = (num_subs, num_insertions, num_deletions)
             if ENABLE_TIMING_TEST:
-                t = Timer(lambda: write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq))
+                t = Timer(lambda: write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations))
                 print("Min Write Time = %f" % ( min(t.repeat(repeat=TIMING_RUNS, number=1))))
             
-            write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq)
+            write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations)
     
             if summary_file_path:
                 summary_list = list()
                 summary_list.extend([(pos, new_indexed_seq[pos]) for pos in subs_positions])
-                summary_list.extend([(pos, "_deletion") for pos in deletion_positions])
                 summary_list.extend([(pos, new_indexed_seq[pos] + "_insertion") for pos in insertion_positions])
+                summary_list.extend([(pos, "_deletion") for pos in deletion_positions])
                 for pos, change in sorted(summary_list):
                     snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], change))
     
@@ -267,7 +274,7 @@ def main(args):
     
     
     run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, 
-                    args.num_deletions, args.num_insertions, args.summary_file)
+                    args.num_insertions, args.num_deletions, args.summary_file)
 
 
 if __name__ == '__main__':
