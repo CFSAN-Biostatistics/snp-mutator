@@ -35,7 +35,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 mutator tests
+	flake8 snpmutator tests
 
 test:
 	python setup.py test
@@ -44,15 +44,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source mutator setup.py test
+	coverage run --source snpmutator setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
 
 docs:
-	rm -f docs/mutator.rst
+	rm -f docs/snpmutator.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ mutator
+	sphinx-apidoc -o docs/ snpmutator
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	xdg-open docs/_build/html/index.html

@@ -29,23 +29,23 @@ test_requirements = [
 ]
 
 setup(
-    name='mutator',
+    name='snp-mutator',
     version='0.1.0',
     description="Generate mutated sequence files from a reference genome.",
     long_description=readme + '\n\n' + history,
     author="Hugh Rand",
     author_email='Hugh.Rand@fda.hhs.gov',
-    url='https://github.com/CFSAN-Biostatistics/mutator',
+    url='https://github.com/CFSAN-Biostatistics/snp-mutator',
     packages=[
-        'mutator',
+        'snpmutator',
     ],
-    package_dir={'mutator':
-                 'mutator'},
+    package_dir={'snpmutator':
+                 'snpmutator'},
     include_package_data=True,
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords=['bioinformatics', 'NGS', 'mutator'],
+    keywords=['bioinformatics', 'NGS', 'snp-mutator'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -59,7 +59,7 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     scripts=[
-        'mutator/mutator.py',
+        'snpmutator/snpmutator.py',
     ],
     test_suite='tests',
     tests_require=test_requirements

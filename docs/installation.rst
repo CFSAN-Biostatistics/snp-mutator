@@ -6,7 +6,7 @@ Installation
 
 At the command line::
 
-    $ pip install --user mutator
+    $ pip install --user snp-mutator
 
 Update your .bashrc file with the path to user-installed python packages::
 
@@ -14,21 +14,21 @@ Update your .bashrc file with the path to user-installed python packages::
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv mutator
-    $ pip install mutator
+    $ mkvirtualenv snp-mutator
+    $ pip install snp-mutator
 
 
-Upgrading Mutator
+Upgrading SNP Mutator
 -----------------------------------------
 
 If you previously installed with pip, you can upgrade to the newest version from the command line::
 
-    $ pip install --user --upgrade mutator
+    $ pip install --user --upgrade snp-mutator
 
 
-Uninstalling Mutator
+Uninstalling SNP Mutator
 --------------------------------------------
 
 If you installed with pip, you can uninstall from the command line::
 
-    $ pip uninstall mutator
+    $ pip uninstall snp-mutator

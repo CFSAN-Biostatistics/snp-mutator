@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use Mutator::
+To use SNP Mutator::
 
     TODO: insert usage instructions here
