@@ -68,6 +68,7 @@ Ready to contribute? Here's how to set up `snp-mutator` for local development.
 
     $ mkvirtualenv snp-mutator
     $ cd snp-mutator/
+    $ pip install Numpy
     $ python setup.py develop
     $ pip install sphinx_rtd_theme    # the documentation uses the ReadTheDocs theme
 
@@ -85,9 +86,11 @@ Ready to contribute? Here's how to set up `snp-mutator` for local development.
 
    To get flake8 and tox, just pip install them into your virtualenv.
 
-6. Update the documentation and review the changes locally with sphinx:
+6. Update the documentation and review the changes locally with sphinx::
 
-    $ make docs
+    $ cd docs
+    $ make html
+    $ xdg-open _build/html/index.html
 
 7. Commit your changes and push your branch to GitHub::
 
@@ -108,10 +111,3 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.rst.
 3. The pull request should work for Python 2.6, 2.7, 3.3, and 3.4, and for PyPy.
    Make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run a subset of tests::
-
-    $ python -m unittest tests.test_snpmutator

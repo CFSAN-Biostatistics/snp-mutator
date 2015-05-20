@@ -19,7 +19,7 @@ SNP Mutator
 
 Generate mutated sequence files from a reference genome.
 
-The SNP Mutator was developed by the United States Food 
+SNP Mutator was developed by the United States Food 
 and Drug Administration, Center for Food Safety and Applied Nutrition.
 
 * Free software
@@ -31,7 +31,9 @@ and Drug Administration, Center for Food Safety and Applied Nutrition.
 Features
 --------
 
-* TODO: Insert a bulleted list of features here
+* Reads a fasta file and generates any number of mutated fasta replicate files.
+* Mutations can be any number of substitutions, insertions, and deletions at randomly chosen positions.
+* Generates a summary file listing the original base and the mutation for all mutated positions.
 
 
 Citing SNP Mutator
