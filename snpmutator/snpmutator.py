@@ -197,8 +197,8 @@ def parse_arguments(system_args):
     Parameters
     ----------
     system_args : list
-        List of command line arguments, usually sys.argv.
-        
+        List of command line arguments, usually sys.argv[1:].
+
     Returns
     -------
     Namespace
@@ -218,10 +218,10 @@ def parse_arguments(system_args):
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int, default=None, help="Random number seed making the results reproducible.")
-    
-    args = parser.parse_args()
+
+    args = parser.parse_args(system_args)
     return args
-            
+
 
 def main(args):
     """
@@ -260,7 +260,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = parse_arguments(sys.argv)
+    args = parse_arguments(sys.argv[1:])
     main(args)
     
 
