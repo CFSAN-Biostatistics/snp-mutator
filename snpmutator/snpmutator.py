@@ -1,11 +1,10 @@
 #!/usr/bin/env python
- 
+
 from __future__ import print_function
 import argparse
 import sys
 import os.path
 from numpy import random
-from timeit import Timer
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
@@ -25,13 +24,13 @@ def read_fasta_sequence(fasta_file_path):
     seq_name : str
         The fasta description of the first sequence in the file only.
     sequence : str
-        Sequence string. 
+        Sequence string.
         Note: if the fast file contains multiple sequences, all the sequences
         are combined into a single string.
     """
     seq_string = []
-    with open(fasta_file_path, "r") as file:
-        for idx, line in enumerate(file):
+    with open(fasta_file_path, "r") as infile:
+        for idx, line in enumerate(infile):
             if idx == 0:
                 seq_name = line.strip(">").strip("\n")
             elif ">" in line:
@@ -45,8 +44,8 @@ def read_fasta_sequence(fasta_file_path):
 
 def write_fasta_sequence(seq_id, file_path, sequence_list, mutations):
     """
-    Write a mutated sequence to a fasta file.  The fasta defline is suffixed 
-    with a mutation description of the form (mutated s=100 i=20 d=20) 
+    Write a mutated sequence to a fasta file.  The fasta defline is suffixed
+    with a mutation description of the form (mutated s=100 i=20 d=20)
     describing the number of substitutions, insertions, and deletions.
 
     Parameters
@@ -59,7 +58,7 @@ def write_fasta_sequence(seq_id, file_path, sequence_list, mutations):
         List of sequence fragments which may be 0 or more bases.  The fragments
         are concatenated before writing to the fast a file.
     mutations : tuple
-        3-tuple of number of substitutions, insertions, and deletions in that 
+        3-tuple of number of substitutions, insertions, and deletions in that
         order.  The mutation counts are appended to the fasta defline.
     """
     seq_str = "".join(sequence_list)
@@ -85,14 +84,14 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
         original base at positions having insertions.
     num_deletions : int
         Number of base deletions to make.
-        
+
     Returns
     -------
     new_indexed_seq : list of str
         List indexed by original position containing strings of bases.  Each
         string can be 0 - 2 bases long, where a zero length string indicates
         a deletion at the position, a string containing a single base indicates
-        no mutation at the position, and a string containing two bases 
+        no mutation at the position, and a string containing two bases
         indicates an insertion prior to the original base at the position.
     subs_positions : array of int
         Array of positions where substitions are introduced.
@@ -105,7 +104,7 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
                             "C" : ["A", "T", "G"],
                             "T" : ["C", "A", "G"],
                             "G" : ["C", "T", "A"],
-                            }
+                           }
 
     seq_length = len(seq_str)
     num_mutations = num_subs + num_deletions + num_insertions
@@ -137,14 +136,14 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
 def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
     """
     Generate multiple random mutations of a reference sequence.
-    
+
     Parameters
     ----------
     seq_str : str
         Original sequence string.
     base_file_name : str
-        The base file name of the original reference with the extension 
-        removed.  This will be the file name prefix of the generated mutated 
+        The base file name of the original reference with the extension
+        removed.  This will be the file name prefix of the generated mutated
         files.
     seq_name : str
         ID of the sequence which will be written to the fasta description line.
@@ -158,25 +157,25 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
     num_deletions : int
         Number of base deletions to make.
     summary_file_path : str, optional
-        Path to summary file where a list of positions and corresponding 
+        Path to summary file where a list of positions and corresponding
         mutations will be written.
     """
     if summary_file_path:
         snp_list_file = open(summary_file_path, "w")
-        
+
     try:
         if summary_file_path:
             snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
-        for replicate in range(0, num_sims):  
+        for replicate in range(0, num_sims):
             print("Creating replicate %i" % replicate)
-    
+
             new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
                 build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions)
-           
+
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations)
-    
+
             if summary_file_path:
                 summary_list = list()
                 summary_list.extend([(pos, new_indexed_seq[pos]) for pos in subs_positions])
@@ -184,16 +183,16 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
                 summary_list.extend([(pos, "_deletion") for pos in deletion_positions])
                 for pos, change in sorted(summary_list):
                     snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], change))
-    
+
     finally:
         if summary_file_path:
             snp_list_file.close()
-            
-            
+
+
 def parse_arguments(system_args):
     """
     Parse command line arguments.
-    
+
     Parameters
     ----------
     system_args : list
@@ -204,9 +203,9 @@ def parse_arguments(system_args):
     Namespace
         Command line arguments are stored as attributes of a Namespace.
     """
-    usage = """Generate mutated sequence files from a reference genome.  Takes a fasta file and creates 
-               a specified number of randomly generated base substitutions, insertions, and deletions.  
-               Outputs the mutated genomes, and optionally, a summary file listing the mutations by 
+    usage = """Generate mutated sequence files from a reference genome.  Takes a fasta file and creates
+               a specified number of randomly generated base substitutions, insertions, and deletions.
+               Outputs the mutated genomes, and optionally, a summary file listing the mutations by
                position."""
 
     parser = argparse.ArgumentParser(description=usage, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -233,7 +232,7 @@ def main(args):
         Command line arguments stored as attributes of a Namespace, usually
         parsed from sys.argv, but can be set programmatically for unit testing
         or other purposes.
-        
+
     See Also
     --------
     parse_arguments()
@@ -241,26 +240,26 @@ def main(args):
     # Input file arg
     in_file_path = args.input_fasta_file
     in_file_name = os.path.basename(in_file_path)
-    base_file_name, in_fileExt = os.path.splitext(in_file_name)
-    
+    base_file_name, in_file_ext = os.path.splitext(in_file_name)
+
     # Random seed option
     random.seed(args.random_seed)
-    
+
     # Read the reference and generate mutations
     seq_name, seq_str = read_fasta_sequence(in_file_path)
     seq_length = len(seq_str)
-    
+
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
     if num_mutations > seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
         sys.exit()
-    
-    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs, 
+
+    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs,
                     args.num_insertions, args.num_deletions, args.summary_file)
 
 
 if __name__ == '__main__':
     args = parse_arguments(sys.argv[1:])
     main(args)
-    
+
 
