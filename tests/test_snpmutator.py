@@ -190,6 +190,36 @@ class TestSnpmutator(unittest.TestCase):
     def setUp(self):
         random.seed(1)
 
+    def test_invalid_args(self):
+        """Verify the argument parser rejects invalid arguments
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 100)
+        
+        sys_arguments = ("-s -1 " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-i -1 " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-d -1 " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-s aa " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-i aa " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-d aa " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-n -1 " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
+        sys_arguments = ("-n aa " + original_file_path).split()
+        self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
+
     def test_zero_changes(self):
         """Verify the output fasta file matches the input fasta file when zero substitions, insertions, and deletions are requested.
         """

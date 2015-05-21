@@ -207,16 +207,34 @@ def parse_arguments(system_args):
                a specified number of randomly generated base substitutions, insertions, and deletions.
                Outputs the mutated genomes, and optionally, a summary file listing the mutations by
                position."""
+               
+    def non_negative_int(value):
+        try:
+            ivalue = int(value)
+        except:
+            raise argparse.ArgumentTypeError("Must be a number >= 0")
+        if ivalue < 0:
+            raise argparse.ArgumentTypeError("Must be >= 0")
+        return ivalue
+               
+    def positive_int(value):
+        try:
+            ivalue = int(value)
+        except:
+            raise argparse.ArgumentTypeError("Must be a number greater than 0")
+        if ivalue <= 0:
+            raise argparse.ArgumentTypeError("Must be greater than 0")
+        return ivalue
 
     parser = argparse.ArgumentParser(description=usage, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(                                             dest="input_fasta_file", type=str,               help="Input fasta file.")
-    parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str, default=None, help="Output positional summary file.")
-    parser.add_argument("-n", "--num-simulations",   metavar="INT",  dest="num_sims",         type=int, default=100,  help="Number of mutated sequences to generate.")
-    parser.add_argument("-s", "--num-substitutions", metavar="INT",  dest="num_subs",         type=int, default=500,  help="Number of substitutions.")
-    parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=int, default=20,   help="Number of insertions.")
-    parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=int, default=20,   help="Number of deletions.")
-    parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int, default=None, help="Random number seed making the results reproducible.")
+    parser.add_argument(                                             dest="input_fasta_file", type=str,                            help="Input fasta file.")
+    parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str,              default=None, help="Output positional summary file.")
+    parser.add_argument("-n", "--num-simulations",   metavar="INT",  dest="num_sims",         type=positive_int,     default=100,  help="Number of mutated sequences to generate.")
+    parser.add_argument("-s", "--num-substitutions", metavar="INT",  dest="num_subs",         type=non_negative_int, default=500,  help="Number of substitutions.")
+    parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
+    parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
+    parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed making the results reproducible.")
 
     args = parser.parse_args(system_args)
     return args
