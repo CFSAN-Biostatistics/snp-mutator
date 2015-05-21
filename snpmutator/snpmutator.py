@@ -168,14 +168,15 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
         if summary_file_path:
             snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
 
-        for replicate in range(0, num_sims):
+        for replicate in range(1, num_sims + 1):
             print("Creating replicate %i" % replicate)
+            replicate_name = base_file_name + "_mutated_" + str(replicate)
 
             new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
                 build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
-            write_fasta_sequence(seq_name, base_file_name + "_mutated_" + str(replicate) + ".fasta", new_indexed_seq, mutations)
+            write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
 
             if summary_file_path:
                 summary_list = list()
@@ -183,7 +184,7 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
                 summary_list.extend([(pos, new_indexed_seq[pos] + "_insertion") for pos in insertion_positions])
                 summary_list.extend([(pos, "_deletion") for pos in deletion_positions])
                 for pos, change in sorted(summary_list):
-                    snp_list_file.write("%i\t%i\t%s\t%s\n" % (replicate, pos + 1, seq_str[pos], change))
+                    snp_list_file.write("%s\t%i\t%s\t%s\n" % (replicate_name, pos + 1, seq_str[pos], change))
 
     finally:
         if summary_file_path:

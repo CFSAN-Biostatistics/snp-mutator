@@ -234,7 +234,7 @@ class TestSnpmutator(unittest.TestCase):
         args.random_seed = 1
         args.summary_file = None
         snpmutator.main(args)
-        no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_0.fasta")
+        no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_1.fasta")
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
 
     def test_snp_changes(self):
@@ -252,17 +252,17 @@ class TestSnpmutator(unittest.TestCase):
 
         args.num_subs = 1
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "GCTAAATCGG", "SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_subs = 5
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "ACTATAGCGC", "SNP 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_subs = 10
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "AGTCTCGTAC", "SNP 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_insert_changes(self):
@@ -281,17 +281,17 @@ class TestSnpmutator(unittest.TestCase):
 
         args.num_insertions = 1
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "GCGCAAATCGG", "Insert 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_insertions = 5
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CGCGCATAAATCGCG", "Insert 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_insertions = 10
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CGACGCTATATAATTCCGCG", "Insert 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_delete_changes(self):
@@ -309,17 +309,17 @@ class TestSnpmutator(unittest.TestCase):
 
         args.num_deletions = 1
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "GCAAATCGG", "Delete 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_deletions = 5
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CAACG", "Delete 5 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_deletions = 10
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "", "Delete 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
     def test_mutate_mix_changes(self):
@@ -337,21 +337,21 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 1
         args.num_deletions = 1
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "GCTAAAATCG", "Mutate mix 1,1,1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_subs = 2
         args.num_insertions = 2
         args.num_deletions = 2
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "TGCTCAACGC", "Mutate mix 2,2,2 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
         args.num_subs = 3
         args.num_insertions = 4
         args.num_deletions = 3
         snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_0.fasta")
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CCTTAGTCAGC", "Mutate mix 3,4,3 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
             
     def test_too_many_mutations(self):
@@ -386,12 +386,12 @@ class TestSnpmutator(unittest.TestCase):
         args.random_seed = 1
         args.summary_file = None
         snpmutator.main(args)
-        mutated_seq_record0 = read_fasta_seq_record("original_mutated_0.fasta")
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
         mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
-        self.assertNotEqual(str(mutated_seq_record0.seq), str(mutated_seq_record1.seq), "Generated sequences 0 and 1 should be different.")
+        mutated_seq_record3 = read_fasta_seq_record("original_mutated_3.fasta")
         self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
-        self.assertNotEqual(str(mutated_seq_record0.seq), str(mutated_seq_record2.seq), "Generated sequences 0 and 2 should be different.")
+        self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
 
     def test_summary_creation(self):
         """Verify the summary file is created if and only if requested.
@@ -422,12 +422,12 @@ class TestSnpmutator(unittest.TestCase):
         Delete all the temporary directories and files created during this 
         testing session.
         """
-        if os.path.exists("original_mutated_0.fasta"):
-            os.remove("original_mutated_0.fasta")
         if os.path.exists("original_mutated_1.fasta"):
             os.remove("original_mutated_1.fasta")
         if os.path.exists("original_mutated_2.fasta"):
             os.remove("original_mutated_2.fasta")
+        if os.path.exists("original_mutated_3.fasta"):
+            os.remove("original_mutated_3.fasta")
         if os.path.exists("original_snpListMutated.txt"):
             os.remove("original_snpListMutated.txt")
         TempDirectory.cleanup_all()

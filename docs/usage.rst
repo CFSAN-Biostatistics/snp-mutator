@@ -58,7 +58,7 @@ Multiple mutated replicate files are generated in the current working directory.
 named with the basename of the original reference file, suffixed with ``_mutated_#.fasta``.
 
 For example, if the reference file name is ``NC_011149.fasta``, the first two replicate files
-are named ``NC_011149_mutated_0.fasta`` and ``NC_011149_mutated_1.fasta``.
+are named ``NC_011149_mutated_1.fasta`` and ``NC_011149_mutated_2.fasta``.
 
 The defline (description) of the generated fasta files is copied from the original reference
 fasta file, but with a suffix describing the mutations.  For example, the defline suffix 
