@@ -135,7 +135,8 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
 
 def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
     """
-    Generate multiple random mutations of a reference sequence.
+    Generate multiple random mutations of a reference sequence, repeatedly 
+    calling build_mutated_seq() to create each of the mutated sequences.
 
     Parameters
     ----------
@@ -234,7 +235,7 @@ def parse_arguments(system_args):
     parser.add_argument("-s", "--num-substitutions", metavar="INT",  dest="num_subs",         type=non_negative_int, default=500,  help="Number of substitutions.")
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
-    parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed making the results reproducible.")
+    parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
 
     args = parser.parse_args(system_args)
     return args

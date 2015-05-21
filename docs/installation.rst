@@ -32,3 +32,9 @@ Uninstalling SNP Mutator
 If you installed with pip, you can uninstall from the command line::
 
     $ pip uninstall snp-mutator
+
+
+Requirements
+------------
+
+SNP Mutator requires requires python version 2.6 or 2.7. It has not been tested on other python versions.
