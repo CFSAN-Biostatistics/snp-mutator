@@ -166,7 +166,7 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
 
     try:
         if summary_file_path:
-            snp_list_file.write("Replicate\tPosition\tOriginal Base\tNew Base\n")
+            snp_list_file.write("Replicate\tPosition\tOriginalBase\tNewBase\n")
 
         for replicate in range(1, num_sims + 1):
             print("Creating replicate %i" % replicate)
