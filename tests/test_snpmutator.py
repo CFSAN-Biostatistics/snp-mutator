@@ -21,7 +21,7 @@ from snpmutator import snpmutator
 
 
 
-def make_random_dna_string(length):
+def make_random_dna_string(length, allowed_bases):
     """
     Create random DNA sequence string of the specified length.
     
@@ -29,13 +29,15 @@ def make_random_dna_string(length):
     ----------
     length : int
         The length of the DNA string being generated.
+    allowed_bases : str
+        A string of possible bases.
         
     Returns
     -------
     str
         Random DNA string
     """
-    char_list = [random.choice("GATC") for _ in range(length)]
+    char_list = [random.choice(allowed_bases) for _ in range(length)]
     return "".join(char_list)
     
 
@@ -70,7 +72,34 @@ def write_fasta(seq_string, directory, file_name, ident="", name="", description
     return file_path
 
     
-def write_random_dna_fasta(directory, file_name, length):
+def write_fixed_dna_fasta(dna, directory, file_name):
+    """
+    Write a dna string to a fasta file.
+    The fasta file will contain a random ID, name, and description.
+
+    Parameters
+    ----------
+    dna : str
+        String of DNA to write to fasta file.
+    directory : str
+        Directory of the fasta file to write
+    file_name : str
+        File name of the fasta file to write
+        
+    Returns
+    -------
+    file_path : str
+        Path of fasta file
+    """
+    random_num_str = str(random.choice(range(10, 100))) # two digit number
+    ident = "Id" + random_num_str
+    name = "Name" + random_num_str
+    description = "Description" + random_num_str
+    file_path = write_fasta(dna, directory, file_name, ident, name, description)
+    return file_path
+
+
+def write_random_dna_fasta(directory, file_name, length, allowed_bases="GATC"):
     """
     Write a random dna string of a specified length to a fasta file.
     The fasta file will also contain a random ID, name, and description.
@@ -83,6 +112,8 @@ def write_random_dna_fasta(directory, file_name, length):
         File name of the fasta file to write
     length : int
         Length of nucleotide sequence generate and write to the fasta file
+    allowed_bases : str, optional
+        A string of possible bases.  Defaults to 'GATC'
         
     Returns
     -------
@@ -91,12 +122,8 @@ def write_random_dna_fasta(directory, file_name, length):
     dna : str
         Generated DNA string
     """
-    dna = make_random_dna_string(length)
-    random_num_str = str(random.choice(range(10, 100))) # two digit number
-    ident = "Id" + random_num_str
-    name = "Name" + random_num_str
-    description = "Description" + random_num_str
-    file_path = write_fasta(dna, directory, file_name, ident, name, description)
+    dna = make_random_dna_string(length, allowed_bases)
+    file_path = write_fixed_dna_fasta(dna, directory, file_name)
     return (file_path, dna)
 
 
@@ -265,6 +292,25 @@ class TestSnpmutator(unittest.TestCase):
         mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "AGTCTCGTAC", "SNP 10 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
+    def test_eligible_snp_changes(self):
+        """Test substitutions where some positions are ineligible
+        """
+        directory = TempDirectory()
+        dna = "12345aaaaaAAAAA12345"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.num_insertions = 0
+        args.num_deletions = 0
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_subs = 10
+        snpmutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), "12345GGTCTCGTGC12345", "Eligible SNP test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
     def test_insert_changes(self):
         """Test various numbers of insertions.
         """
@@ -369,6 +415,24 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 4
         args.num_deletions = 3
         # Verify exit if number of mutations exceeds sequence length
+        self.assertRaises(SystemExit, snpmutator.main, args)
+            
+    def test_too_many_mutations_ineligible(self):
+        """Deliberately exceed the maximum allowed number of mutations when
+        some of the reference positions are not ATGC.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10, "ACGTSNWR")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.random_seed = 1
+        args.summary_file = None
+
+        args.num_subs = 10
+        args.num_insertions =0
+        args.num_deletions = 0
+        # Verify exit if number of mutations exceeds eligible sequence length
         self.assertRaises(SystemExit, snpmutator.main, args)
             
             

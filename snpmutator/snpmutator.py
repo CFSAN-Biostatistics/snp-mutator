@@ -10,6 +10,9 @@ from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 
 
+__version__ = '0.2.0'
+
+
 def read_fasta_sequence(fasta_file_path):
     """
     Read a fasta file and return the sequence as a string.
@@ -68,7 +71,31 @@ def write_fasta_sequence(seq_id, file_path, sequence_list, mutations):
     SeqIO.write([record], file_path, "fasta")
 
 
-def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
+def get_eligible_positions(seq_str):
+    """
+    Find all the positions where the original base is ACTG.  Those are the only
+    positions eligible for mutation.
+
+    Parameters
+    ----------
+    seq_str : str
+        Sequence string.
+
+    Returns
+    -------
+    eligible_positions : list of integers
+        List of all positions where the base is eligible for mutation.
+    """
+    eligible_positions = list()
+    pos = 0
+    for base in seq_str:
+        if base.upper() in "ACGT":
+            eligible_positions.append(pos)
+        pos += 1
+    return eligible_positions
+
+
+def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions):
     """
     Copy a sequence and randomly introduce the specified numbers of
     substitutions, insertions, and deletions.
@@ -77,6 +104,8 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
     ----------
     seq_str : str
         Sequence string.
+    eligible_positions : list of integers
+        Positions where the original base is eligible for mutating
     num_subs : int
         Number of base substitutions to make.
     num_insertions : int
@@ -108,7 +137,7 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
 
     seq_length = len(seq_str)
     num_mutations = num_subs + num_deletions + num_insertions
-    positions = random.choice(seq_length, size=num_mutations, replace=False)
+    positions = random.choice(eligible_positions, size=num_mutations, replace=False)
     subs_positions = positions[: num_subs]
     deletion_positions = positions[num_subs : (num_subs + num_deletions)]
     insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
@@ -119,8 +148,12 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
 
     for i in subs_positions:
         original_base = seq_str[i]
-        new_base = random.choice(substitution_choices[original_base], size=1)[0]
-        new_indexed_seq[i] = new_base
+        upper_original_base = original_base.upper()
+        if upper_original_base in substitution_choices:
+            new_base = random.choice(substitution_choices[upper_original_base], size=1)[0]
+            new_indexed_seq[i] = new_base
+        else:
+            print('Warning: unexpected base "%s" at position %i.  There will be no mutation at this position.' % (original_base, i), file=sys.stderr)
 
     for i in deletion_positions:
         new_indexed_seq[i] = ""
@@ -133,7 +166,7 @@ def build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions):
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
+def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
     """
     Generate multiple random mutations of a reference sequence, repeatedly 
     calling build_mutated_seq() to create each of the mutated sequences.
@@ -142,6 +175,8 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
     ----------
     seq_str : str
         Original sequence string.
+    eligible_positions : list of integers
+        Positions where the original base is eligible for mutating
     base_file_name : str
         The base file name of the original reference with the extension
         removed.  This will be the file name prefix of the generated mutated
@@ -173,7 +208,7 @@ def run_simulations(seq_str, base_file_name, seq_name, num_sims, num_subs, num_i
             replicate_name = base_file_name + "_mutated_" + str(replicate)
 
             new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
-                build_mutated_seq(seq_str, num_subs, num_insertions, num_deletions)
+                build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
@@ -237,6 +272,7 @@ def parse_arguments(system_args):
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
+    parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
     return args
@@ -267,14 +303,17 @@ def main(args):
 
     # Read the reference and generate mutations
     seq_name, seq_str = read_fasta_sequence(in_file_path)
-    seq_length = len(seq_str)
+
+    # Find the eligible positions
+    eligible_positions = get_eligible_positions(seq_str)
+    eligible_seq_length = len(eligible_positions)
 
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
-    if num_mutations > seq_length:
-        print("ERROR: You have specified a number of substitutions that is greater than the length of the sequence", file=sys.stderr)
+    if num_mutations > eligible_seq_length:
+        print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
         sys.exit()
 
-    run_simulations(seq_str, base_file_name, seq_name, args.num_sims, args.num_subs,
+    run_simulations(seq_str, eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
                     args.num_insertions, args.num_deletions, args.summary_file)
 
 

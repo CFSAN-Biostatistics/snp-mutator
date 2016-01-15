@@ -3,6 +3,13 @@
 History
 -------
 
+0.2.0 (2016-01-15)
+---------------------
+
+* Allow lowercase bases in the input fasta file.
+* Do not mutate gaps or ambiguous positions.
+* Add a command line switch to show the program version.
+
 0.1.1 (2015-06-17)
 ---------------------
 
