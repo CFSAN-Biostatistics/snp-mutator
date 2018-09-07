@@ -20,18 +20,15 @@ from itertools import izip_longest
 from snpmutator import snpmutator
 
 
-
 def make_random_dna_string(length, allowed_bases):
     """
     Create random DNA sequence string of the specified length.
-    
     Parameters
     ----------
     length : int
         The length of the DNA string being generated.
     allowed_bases : str
         A string of possible bases.
-        
     Returns
     -------
     str
@@ -39,12 +36,12 @@ def make_random_dna_string(length, allowed_bases):
     """
     char_list = [random.choice(allowed_bases) for _ in range(length)]
     return "".join(char_list)
-    
+
 
 def write_fasta(seq_string, directory, file_name, ident="", name="", description=""):
     """
     Write a sequence to a fasta file.
-    
+
     Parameters
     ----------
     seq_string : str
@@ -59,7 +56,7 @@ def write_fasta(seq_string, directory, file_name, ident="", name="", description
         Sequence name
     description : str, optional
         Additional text
-        
+
     Returns
     -------
     str
@@ -71,7 +68,7 @@ def write_fasta(seq_string, directory, file_name, ident="", name="", description
     SeqIO.write([record], file_path, "fasta")
     return file_path
 
-    
+
 def write_fixed_dna_fasta(dna, directory, file_name):
     """
     Write a dna string to a fasta file.
@@ -85,7 +82,7 @@ def write_fixed_dna_fasta(dna, directory, file_name):
         Directory of the fasta file to write
     file_name : str
         File name of the fasta file to write
-        
+
     Returns
     -------
     file_path : str
@@ -114,7 +111,7 @@ def write_random_dna_fasta(directory, file_name, length, allowed_bases="GATC"):
         Length of nucleotide sequence generate and write to the fasta file
     allowed_bases : str, optional
         A string of possible bases.  Defaults to 'GATC'
-        
+
     Returns
     -------
     file_path : str
@@ -135,7 +132,7 @@ def read_fasta_seq_record(file_path):
     ----------
     file_path : str
         Path to the fasta file
-        
+
     Returns
     -------
     SeqRecord
@@ -148,7 +145,7 @@ def read_fasta_seq_record(file_path):
 
 def compare_fasta_files(file_path1, file_path2):
     """
-    Determine if two fasta files have equivalent contents.  Not necessarily 
+    Determine if two fasta files have equivalent contents.  Not necessarily
     byte-by-byte identical.
 
     Parameters
@@ -157,7 +154,7 @@ def compare_fasta_files(file_path1, file_path2):
         Path to the first file.
     file_path2 : str
         Path to the second file.
-        
+
     Returns
     -------
     bool
@@ -174,9 +171,9 @@ def compare_fasta_files(file_path1, file_path2):
 
 def compare_mutated_fasta_files(original_file_path, mutated_file_path):
     """
-    Determine if two fasta files have equivalent contents after running a 
-    zero count mutation on the original file.  The files will not be identical.  
-    The fasta defline will differ in the description suffix and the sequence 
+    Determine if two fasta files have equivalent contents after running a
+    zero count mutation on the original file.  The files will not be identical.
+    The fasta defline will differ in the description suffix and the sequence
     lines may have different lengths.
 
     Parameters
@@ -185,10 +182,10 @@ def compare_mutated_fasta_files(original_file_path, mutated_file_path):
         Path to the original fasta file.
     mutated_file_path : str
         Path to the mutated fasta file.
-        
+
     Returns
     -------
-    bool
+mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")    bool
         True if the two fasta files are equivalent, False otherwise.
     """
     with open(original_file_path) as handle1:
@@ -209,7 +206,6 @@ def compare_mutated_fasta_files(original_file_path, mutated_file_path):
                 if not r2.description.startswith(r1.description):
                     return False
     return True
-                
 
 
 class TestSnpmutator(unittest.TestCase):
@@ -222,7 +218,7 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 100)
-        
+
         sys_arguments = ("-s -1 " + original_file_path).split()
         self.assertRaises(SystemExit, snpmutator.parse_arguments, sys_arguments)
 
@@ -259,9 +255,11 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 0
         args.num_deletions = 0
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
         snpmutator.main(args)
         no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_1.fasta")
+        print(str(read_fasta_seq_record("original_mutated_1.fasta")))
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
 
     def test_snp_changes(self):
@@ -274,8 +272,9 @@ class TestSnpmutator(unittest.TestCase):
         args.num_sims = 1
         args.num_insertions = 0
         args.num_deletions = 0
-        args.random_seed = 1
-        args.summary_file = None
+		args.random_seed = 1
+		args.subset_len = 0
+		args.summary_file = None
 
         args.num_subs = 1
         snpmutator.main(args)
@@ -304,6 +303,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 0
         args.num_deletions = 0
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_subs = 10
@@ -314,7 +314,7 @@ class TestSnpmutator(unittest.TestCase):
     def test_insert_changes(self):
         """Test various numbers of insertions.
         """
-        
+
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
         args = argparse.Namespace()
@@ -323,6 +323,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_subs = 0
         args.num_deletions = 0
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_insertions = 1
@@ -351,6 +352,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_subs = 0
         args.num_insertions = 0
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_deletions = 1
@@ -377,6 +379,7 @@ class TestSnpmutator(unittest.TestCase):
         args.input_fasta_file = original_file_path
         args.num_sims = 1
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_subs = 1
@@ -399,7 +402,7 @@ class TestSnpmutator(unittest.TestCase):
         snpmutator.main(args)
         mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(str(mutated_seq_record.seq), "CCTTAGTCAGC", "Mutate mix 3,4,3 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
-            
+
     def test_too_many_mutations(self):
         """Deliberately exceed the maximum allowed number of mutations.
         """
@@ -409,6 +412,7 @@ class TestSnpmutator(unittest.TestCase):
         args.input_fasta_file = original_file_path
         args.num_sims = 1
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_subs = 4
@@ -416,7 +420,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 3
         # Verify exit if number of mutations exceeds sequence length
         self.assertRaises(SystemExit, snpmutator.main, args)
-            
+
     def test_too_many_mutations_ineligible(self):
         """Deliberately exceed the maximum allowed number of mutations when
         some of the reference positions are not ATGC.
@@ -427,15 +431,15 @@ class TestSnpmutator(unittest.TestCase):
         args.input_fasta_file = original_file_path
         args.num_sims = 1
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
 
         args.num_subs = 10
-        args.num_insertions =0
+        args.num_insertions = 0
         args.num_deletions = 0
         # Verify exit if number of mutations exceeds eligible sequence length
         self.assertRaises(SystemExit, snpmutator.main, args)
-            
-            
+
     def test_not_all_same(self):
         """Verify Mutator creates different mutated fasta files when generating more than one.
         """
@@ -448,6 +452,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 2
         args.num_deletions = 2
         args.random_seed = 1
+        args.subset_len = 0
         args.summary_file = None
         snpmutator.main(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -469,6 +474,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 0
         args.num_deletions = 0
         args.random_seed = 1
+        args.subset_len = 0
 
         args.summary_file = None
         snpmutator.main(args)
@@ -480,10 +486,48 @@ class TestSnpmutator(unittest.TestCase):
         summary_file_exists = os.path.exists("original_snpListMutated.txt")
         self.assertTrue(summary_file_exists, "The summary file is missing when requested.")
 
+    def test_pooling(self):
+		"""Verify that pooling works for all cases
+		"""
+		directory = TempDirectory()
+		dna = "AAAAAAAAAA"
+	    original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+	    args = argparse.Namespace()
+	    args.input_fasta_file = original_file_path
+	    args.num_sims = 1
+	    args.random_seed = 1
+	    args.subset_len = 1
+	    args.summary_file = None
+
+	    args.num_subs = 1
+		args.num_insertions = 0
+		args.num_deletions = 0
+	    snpmutator.main(args)
+	    mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+		self.assertEqual(str(mutated_seq_record.seq),'AATAAAAAAA', "Pooling SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+		args.num_subs = 0
+		args.num_insertions=1
+		args.num_deletions=0
+		snpmutator.main(args)
+		mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+		self.assertEqual(str(mutated_seq_record.seq),'AAGAAAAAAAA', "Pooling INS 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+		args.num_subs = 0
+		args.num_insertions = 0
+		args.num_deletions = 1
+		snpmutator.main(args)
+		mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+	        self.assertEqual(str(mutated_seq_record.seq),'AAAAAAAAA', "Pooling DEL 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+
+		args.num_subs = 1
+		args.num_insertions = 1
+		args.num_deltions = 0
+		self.assertRaises(SystemExit, snpmutator.main, args)
 
     def tearDown(self):
         """
-        Delete all the temporary directories and files created during this 
+        Delete all the temporary directories and files created during this
         testing session.
         """
         if os.path.exists("original_mutated_1.fasta"):
