@@ -129,18 +129,17 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     deletion_positions : array of int
         Array of positions where bases are deleted.
     """
-    substitution_choices = {"A" : ["C", "T", "G"],
-                            "C" : ["A", "T", "G"],
-                            "T" : ["C", "A", "G"],
-                            "G" : ["C", "T", "A"],
-                           }
+    substitution_choices = {"A": ["C", "T", "G"],
+                            "C": ["A", "T", "G"],
+                            "T": ["C", "A", "G"],
+                            "G": ["C", "T", "A"],
+                            }
 
-    seq_length = len(seq_str)
     num_mutations = num_subs + num_deletions + num_insertions
     positions = random.choice(eligible_positions, size=num_mutations, replace=False)
     subs_positions = positions[: num_subs]
-    deletion_positions = positions[num_subs : (num_subs + num_deletions)]
-    insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
+    deletion_positions = positions[num_subs: (num_subs + num_deletions)]
+    insertion_positions = positions[(num_subs + num_deletions): len(positions)]
 
     # Copy the original sequence in a way that easily allows mutations
     # while preserving position information
@@ -168,7 +167,7 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
 
 def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
     """
-    Generate multiple random mutations of a reference sequence, repeatedly 
+    Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
 
     Parameters
@@ -244,7 +243,7 @@ def parse_arguments(system_args):
                a specified number of randomly generated base substitutions, insertions, and deletions.
                Outputs the mutated genomes, and optionally, a summary file listing the mutations by
                position."""
-               
+
     def non_negative_int(value):
         try:
             ivalue = int(value)
@@ -253,7 +252,7 @@ def parse_arguments(system_args):
         if ivalue < 0:
             raise argparse.ArgumentTypeError("Must be >= 0")
         return ivalue
-               
+
     def positive_int(value):
         try:
             ivalue = int(value)
@@ -272,6 +271,7 @@ def parse_arguments(system_args):
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
+    parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variance from a pool of eligible positions of the specified size")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
@@ -308,6 +308,10 @@ def main(args):
     eligible_positions = get_eligible_positions(seq_str)
     eligible_seq_length = len(eligible_positions)
 
+    if args.subset_len > 0:
+        eligible_positions = random.choice(eligible_positions, args.subset_len, replace=False)
+        eligible_seq_length = len(eligible_positions)
+
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
     if num_mutations > eligible_seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
@@ -320,5 +324,3 @@ def main(args):
 if __name__ == '__main__':
     args = parse_arguments(sys.argv[1:])
     main(args)
-
-

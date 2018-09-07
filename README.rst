@@ -34,6 +34,7 @@ Features
 * Reads a fasta file and generates any number of mutated fasta replicate files.
 * Mutations can be any number of single-base substitutions, insertions, and deletions at randomly 
   chosen positions, uniformly distributed across the genome.
+* Mutations can be chosen from a subset of all possible positions.
 * Generates a summary file listing the original base and the mutation for all mutated positions.
 
 

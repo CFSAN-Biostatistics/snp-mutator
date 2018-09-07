@@ -28,7 +28,8 @@ Step 3 - Generate the mutated sequences::
     # -i 1, one insertion in each mutated sequence
     # -d 0, zero deletions in each mutated sequence
     # -o summary.tsv, generate a mutation summary file called summary.tsv
-    $ snpmutator.py -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv NC_011149.fasta
+    # -p 5, choose mutations from a size 5 pool of all possible positions
+    $ snpmutator.py -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv -p 5 NC_011149.fasta
 
 Step 4 - Examine the results::
 
