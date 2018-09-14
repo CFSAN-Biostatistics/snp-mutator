@@ -10,7 +10,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 
 
-__version__ = '0.2.0'
+__version__ = '1.0.0'
 
 
 def read_fasta_sequence(fasta_file_path):
@@ -165,7 +165,55 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
+def mutate_all(seq_str, eligible_pos):
+        substitution_choices = {"A": ["C", "T", "G"],
+                                "C": ["A", "T", "G"],
+                                "T": ["C", "A", "G"],
+                                "G": ["C", "T", "A"],
+                                }
+        d = {}
+
+        for x in eligible_pos:
+                original_base = seq_str[x]
+                choice = random.random()
+                if choice < 0.333:
+                        upper_original_base = original_base.upper()
+                        d[x] = random.choice(substitution_choices[upper_original_base], size=1)[0]
+                elif choice > 0.666:
+                        insert_base = random.choice(["A", "C", "T", "G"], size=1)[0]
+                        d[x] = insert_base + original_base
+                else:
+                        d[x] = ""
+        return d
+
+
+def build_limited_seq(seq_str, eligible_positions, pre_mutated, num_subs, num_insertions, num_deletions):
+    num_mutations = num_subs + num_deletions + num_insertions
+    positions = random.choice(eligible_positions, size=num_mutations, replace=False)
+    subs_positions = []
+    insertion_positions = []
+    deletion_positions = []
+
+    # Copy the original sequence in a way that easily allows mutations
+    # while preserving position information
+    new_indexed_seq = list(seq_str)
+
+    for i in positions:
+        mutated = pre_mutated[i]
+        if mutated == "":
+            deletion_positions.append(i)
+        elif len(mutated) == 1:
+            subs_positions.append(i)
+        elif len(mutated) == 2:
+            insertion_positions.append(i)
+        else:
+            print("Limited sequence random choice was not found.")
+        new_indexed_seq[i] = mutated
+
+    return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
+
+
+def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, mono, summary_file_path=None):
     """
     Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
@@ -173,7 +221,7 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
     Parameters
     ----------
     seq_str : str
-        Original sequence string.
+        Original sequeseqnce string.
     eligible_positions : list of integers
         Positions where the original base is eligible for mutating
     base_file_name : str
@@ -194,6 +242,8 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
     summary_file_path : str, optional
         Path to summary file where a list of positions and corresponding
         mutations will be written.
+    shared : bool
+        Specificies whether or not to use the same shared mutations for all samples
     """
     if summary_file_path:
         snp_list_file = open(summary_file_path, "w")
@@ -202,12 +252,19 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         if summary_file_path:
             snp_list_file.write("Replicate\tPosition\tOriginalBase\tNewBase\n")
 
+        if mono:
+            pre_mutated = mutate_all(seq_str, eligible_positions)
+
         for replicate in range(1, num_sims + 1):
             print("Creating replicate %i" % replicate)
             replicate_name = base_file_name + "_mutated_" + str(replicate)
 
-            new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
-                build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+            if not mono:
+                new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
+                    build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+            else:
+                new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
+                    build_limited_seq(seq_str, eligible_positions, pre_mutated, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
@@ -273,6 +330,7 @@ def parse_arguments(system_args):
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
     parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variance from a pool of eligible positions of the specified size")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
+    parser.add_argument('-m', '--mono', dest="mono", action='store_true', help="Monomorphic Alleles")
 
     args = parser.parse_args(system_args)
     return args
@@ -318,7 +376,7 @@ def main(args):
         sys.exit()
 
     run_simulations(seq_str, eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
-                    args.num_insertions, args.num_deletions, args.summary_file)
+                    args.num_insertions, args.num_deletions, args.mono, args.summary_file)
 
 
 if __name__ == '__main__':

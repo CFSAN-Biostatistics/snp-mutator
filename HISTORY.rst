@@ -7,6 +7,7 @@ History
 ---------------------
 * Allow for mutations to come from a smaller pool rather than
   all eligible positions
+* Allow for generation of monomorphic Alleles
 
 0.2.0 (2016-01-15)
 ---------------------

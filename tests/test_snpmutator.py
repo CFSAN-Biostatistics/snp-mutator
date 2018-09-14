@@ -185,7 +185,7 @@ def compare_mutated_fasta_files(original_file_path, mutated_file_path):
 
     Returns
     -------
-mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")    bool
+    bool
         True if the two fasta files are equivalent, False otherwise.
     """
     with open(original_file_path) as handle1:
@@ -256,6 +256,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 0
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
         snpmutator.main(args)
         no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_1.fasta")
@@ -272,9 +273,10 @@ class TestSnpmutator(unittest.TestCase):
         args.num_sims = 1
         args.num_insertions = 0
         args.num_deletions = 0
-		args.random_seed = 1
-		args.subset_len = 0
-		args.summary_file = None
+        args.random_seed = 1
+        args.subset_len = 0
+        args.mono = False
+        args.summary_file = None
 
         args.num_subs = 1
         snpmutator.main(args)
@@ -304,6 +306,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 0
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_subs = 10
@@ -324,6 +327,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 0
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_insertions = 1
@@ -353,6 +357,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_insertions = 0
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_deletions = 1
@@ -380,6 +385,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_sims = 1
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_subs = 1
@@ -413,6 +419,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_sims = 1
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_subs = 4
@@ -432,6 +439,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_sims = 1
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
 
         args.num_subs = 10
@@ -453,6 +461,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 2
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
         args.summary_file = None
         snpmutator.main(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -475,6 +484,7 @@ class TestSnpmutator(unittest.TestCase):
         args.num_deletions = 0
         args.random_seed = 1
         args.subset_len = 0
+        args.mono = False
 
         args.summary_file = None
         snpmutator.main(args)
@@ -487,43 +497,68 @@ class TestSnpmutator(unittest.TestCase):
         self.assertTrue(summary_file_exists, "The summary file is missing when requested.")
 
     def test_pooling(self):
-		"""Verify that pooling works for all cases
-		"""
-		directory = TempDirectory()
-		dna = "AAAAAAAAAA"
-	    original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-	    args = argparse.Namespace()
-	    args.input_fasta_file = original_file_path
-	    args.num_sims = 1
-	    args.random_seed = 1
-	    args.subset_len = 1
-	    args.summary_file = None
+        """Verify that pooling works for all cases
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.random_seed = 1
+        args.subset_len = 1
+        args.mono = False
+        args.pool = 1
+        args.summary_file = None
 
-	    args.num_subs = 1
-		args.num_insertions = 0
-		args.num_deletions = 0
-	    snpmutator.main(args)
-	    mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-		self.assertEqual(str(mutated_seq_record.seq),'AATAAAAAAA', "Pooling SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+        args.num_subs = 1
+        args.num_insertions = 0
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), 'AATAAAAAAA', "Pooling SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
-		args.num_subs = 0
-		args.num_insertions=1
-		args.num_deletions=0
-		snpmutator.main(args)
-		mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-		self.assertEqual(str(mutated_seq_record.seq),'AAGAAAAAAAA', "Pooling INS 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+        args.num_subs = 0
+        args.num_insertions = 1
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), 'AAGAAAAAAAA', "Pooling INS 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
-		args.num_subs = 0
-		args.num_insertions = 0
-		args.num_deletions = 1
-		snpmutator.main(args)
-		mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-	        self.assertEqual(str(mutated_seq_record.seq),'AAAAAAAAA', "Pooling DEL 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
+        args.num_subs = 0
+        args.num_insertions = 0
+        args.num_deletions = 1
+        snpmutator.main(args)
+        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(str(mutated_seq_record.seq), 'AAAAAAAAA', "Pooling DEL 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
 
-		args.num_subs = 1
-		args.num_insertions = 1
-		args.num_deltions = 0
-		self.assertRaises(SystemExit, snpmutator.main, args)
+        args.num_subs = 1
+        args.num_insertions = 1
+        args.num_deltions = 0
+        self.assertRaises(SystemExit, snpmutator.main, args)
+
+    def test_momo(self):
+        """Verify that mono works for all cases
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 2
+        args.subset_len = 2
+        args.mono = True
+        args.pool = 2
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 2
+        args.num_insertions = 0
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Mono SNP 2 test failed, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
 
     def tearDown(self):
         """
@@ -539,6 +574,7 @@ class TestSnpmutator(unittest.TestCase):
         if os.path.exists("original_snpListMutated.txt"):
             os.remove("original_snpListMutated.txt")
         TempDirectory.cleanup_all()
+
 
 if __name__ == '__main__':
     unittest.main()

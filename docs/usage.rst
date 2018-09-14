@@ -29,7 +29,8 @@ Step 3 - Generate the mutated sequences::
     # -d 0, zero deletions in each mutated sequence
     # -o summary.tsv, generate a mutation summary file called summary.tsv
     # -p 5, choose mutations from a size 5 pool of all possible positions
-    $ snpmutator.py -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv -p 5 NC_011149.fasta
+    # -m , choose monomorphic alleles
+    $ snpmutator.py -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv -p 5 -m NC_011149.fasta
 
 Step 4 - Examine the results::
 
