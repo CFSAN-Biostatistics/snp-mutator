@@ -36,7 +36,7 @@ Features
   chosen positions, uniformly distributed across the genome.
 * Mutations can be chosen from a subset of all possible positions.
 * Generates a summary file listing the original base and the mutation for all mutated positions.
-* Geneartes monomorphic allele sequences
+* Mutations can be either monomorphic or polymorphic. 
 
 Citing SNP Mutator
 --------------------------------------
