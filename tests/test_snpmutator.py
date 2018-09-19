@@ -8,6 +8,8 @@ test_snpmutator
 Tests for `snpmutator` module.
 """
 
+from __future__ import print_function
+
 import os
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -260,7 +262,6 @@ class TestSnpmutator(unittest.TestCase):
         args.summary_file = None
         snpmutator.main(args)
         no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_1.fasta")
-        print(str(read_fasta_seq_record("original_mutated_1.fasta")))
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
 
     def test_snp_changes(self):
@@ -317,7 +318,6 @@ class TestSnpmutator(unittest.TestCase):
     def test_insert_changes(self):
         """Test various numbers of insertions.
         """
-
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
         args = argparse.Namespace()
@@ -428,6 +428,25 @@ class TestSnpmutator(unittest.TestCase):
         # Verify exit if number of mutations exceeds sequence length
         self.assertRaises(SystemExit, snpmutator.main, args)
 
+    def test_too_many_mutations_pool(self):
+        """Deliberately exceed the maximum allowed number of mutations.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 1
+        args.random_seed = 1
+        args.subset_len = 9
+        args.mono = False
+        args.summary_file = None
+
+        args.num_subs = 4
+        args.num_insertions = 3
+        args.num_deletions = 3
+        # Verify exit if number of mutations exceeds sequence length
+        self.assertRaises(SystemExit, snpmutator.main, args)
+
     def test_too_many_mutations_ineligible(self):
         """Deliberately exceed the maximum allowed number of mutations when
         some of the reference positions are not ATGC.
@@ -471,6 +490,75 @@ class TestSnpmutator(unittest.TestCase):
         self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
         self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
 
+    def test_not_all_same_pool(self):
+        """Verify Mutator creates different mutated fasta files when generating more than one.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 3
+        args.num_subs = 2
+        args.num_insertions = 2
+        args.num_deletions = 2
+        args.random_seed = 1
+        args.subset_len = 500
+        args.mono = False
+        args.summary_file = None
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        mutated_seq_record3 = read_fasta_seq_record("original_mutated_3.fasta")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
+        self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
+
+    def test_not_all_same_mono(self):
+        """Verify Mutator creates different mutated fasta files when generating more than one.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 3
+        args.num_subs = 2
+        args.num_insertions = 2
+        args.num_deletions = 2
+        args.random_seed = 1
+        args.subset_len = 0
+        args.mono = True
+        args.summary_file = None
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        mutated_seq_record3 = read_fasta_seq_record("original_mutated_3.fasta")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
+        self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
+
+    def test_not_all_same_pool_mono(self):
+        """Verify Mutator creates different mutated fasta files when generating more than one.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.num_sims = 3
+        args.num_subs = 2
+        args.num_insertions = 2
+        args.num_deletions = 2
+        args.random_seed = 1
+        args.subset_len = 500
+        args.mono = True
+        args.summary_file = None
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        mutated_seq_record3 = read_fasta_seq_record("original_mutated_3.fasta")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Generated sequences 1 and 2 should be different.")
+        self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
+        self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
+
     def test_summary_creation(self):
         """Verify the summary file is created if and only if requested.
         """
@@ -497,68 +585,133 @@ class TestSnpmutator(unittest.TestCase):
         self.assertTrue(summary_file_exists, "The summary file is missing when requested.")
 
     def test_pooling(self):
-        """Verify that pooling works for all cases
+        """Verify that pooling places mutations at the same location in all replicates.
         """
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
-        args.num_sims = 1
+        args.num_sims = 2
         args.random_seed = 1
         args.subset_len = 1
         args.mono = False
-        args.pool = 1
         args.summary_file = None
 
         args.num_subs = 1
-        args.num_insertions = 0
-        args.num_deletions = 0
-        snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-        self.assertEqual(str(mutated_seq_record.seq), 'AATAAAAAAA', "Pooling SNP 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
-
-        args.num_subs = 0
-        args.num_insertions = 1
-        args.num_deletions = 0
-        snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-        self.assertEqual(str(mutated_seq_record.seq), 'AAGAAAAAAAA', "Pooling INS 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
-
-        args.num_subs = 0
-        args.num_insertions = 0
-        args.num_deletions = 1
-        snpmutator.main(args)
-        mutated_seq_record = read_fasta_seq_record("original_mutated_1.fasta")
-        self.assertEqual(str(mutated_seq_record.seq), 'AAAAAAAAA', "Pooling DEL 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record.seq)))
-
-        args.num_subs = 1
-        args.num_insertions = 1
-        args.num_deltions = 0
-        self.assertRaises(SystemExit, snpmutator.main, args)
-
-    def test_momo(self):
-        """Verify that mono works for all cases
-        """
-        directory = TempDirectory()
-        dna = "AAAAAAAAAA"
-        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.random_seed = 2
-        args.subset_len = 2
-        args.mono = True
-        args.pool = 2
-        args.summary_file = None
-
-        args.num_sims = 2
-        args.num_subs = 2
         args.num_insertions = 0
         args.num_deletions = 0
         snpmutator.main(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
         mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
-        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Mono SNP 2 test failed, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
+        self.assertEqual(str(mutated_seq_record1.seq), 'AATAAAAAAA', "Pooling SNP replicate 1 test failed, dna=%s mutated seq1=%s" % (dna, str(mutated_seq_record1.seq)))
+        self.assertEqual(str(mutated_seq_record2.seq), 'AACAAAAAAA', "Pooling SNP replicate 2 test failed, dna=%s mutated seq2=%s" % (dna, str(mutated_seq_record2.seq)))
+
+        args.num_subs = 0
+        args.num_insertions = 1
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), 'AAGAAAAAAAA', "Pooling INS replicate 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record1.seq)))
+        self.assertEqual(str(mutated_seq_record2.seq), 'AACAAAAAAAA', "Pooling INS replicate 2 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record2.seq)))
+
+        args.num_subs = 0
+        args.num_insertions = 0
+        args.num_deletions = 1
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), 'AAAAAAAAA', "Pooling DEL replicate 1 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record1.seq)))
+        self.assertEqual(str(mutated_seq_record2.seq), 'AAAAAAAAA', "Pooling DEL replicate 2 test failed, dna=%s mutated seq=%s" % (dna, str(mutated_seq_record1.seq)))
+
+    def test_mono_snps(self):
+        """Verify that Monomorphic mutations are the same in all replicates.
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 1
+        args.subset_len = 8
+        args.mono = True
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 8
+        args.num_insertions = 0
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic SNPs do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
+
+    def test_mono_insertions(self):
+        """Verify that Monomorphic mutations are the same in all replicates.
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 1
+        args.subset_len = 8
+        args.mono = True
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 0
+        args.num_insertions = 8
+        args.num_deletions = 0
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic insertions do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
+
+    def test_mono_deletions(self):
+        """Verify that Monomorphic mutations are the same in all replicates.
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 1
+        args.subset_len = 8
+        args.mono = True
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 0
+        args.num_insertions = 0
+        args.num_deletions = 8
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic deletions do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
+
+    def test_mono_mix(self):
+        """Verify that Monomorphic mutations are the same in all replicates.
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 1
+        args.subset_len = 9
+        args.mono = True
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 3
+        args.num_insertions = 3
+        args.num_deletions = 3
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic mix of mutations do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
 
     def tearDown(self):
         """
