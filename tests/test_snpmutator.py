@@ -713,6 +713,28 @@ class TestSnpmutator(unittest.TestCase):
         mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
         self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic mix of mutations do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
 
+    def test_mono_mix_no_del(self):
+        """Verify that Monomorphic mutations are the same in all replicates.
+        """
+        directory = TempDirectory()
+        dna = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
+        args = argparse.Namespace()
+        args.input_fasta_file = original_file_path
+        args.random_seed = 1
+        args.subset_len = 6
+        args.mono = True
+        args.summary_file = None
+
+        args.num_sims = 2
+        args.num_subs = 3
+        args.num_deletions = 0
+        args.num_insertions = 3
+        snpmutator.main(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
+        self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic mix of mutations do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
+
     def tearDown(self):
         """
         Delete all the temporary directories and files created during this
