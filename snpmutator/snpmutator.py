@@ -165,7 +165,7 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def mutate_all(seq_str, eligible_pos):
+def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
     """
     Generate a set mutation for each position in eligible positions.
 
@@ -192,18 +192,26 @@ def mutate_all(seq_str, eligible_pos):
                             }
     sub_d = {}
     ins_d = {}
+    del_d = set()
+
+    num_mutations = float(num_subs + num_insertions + num_deletions)
+    sub_len, ins_len, del_len = round(num_subs/num_mutations*len(eligible_pos)), round(num_insertions/num_mutations*len(eligible_pos)),round(num_deletions/num_mutations*len(eligible_pos))
 
     for x in eligible_pos:
-            original_base = seq_str[x]
+        original_base = seq_str[x]
+        if len(sub_d.keys()) < sub_len:
             upper_original_base = original_base.upper()
-            sub_d[x] = random.choice(substitution_choices[upper_original_base], size=1)[0]
-            insert_base = random.choice(["A", "C", "T", "G"], size=1)[0]
+            sub_d[x] = random.choice(substitution_choices[upper_original_base])
+        elif len(del_d) < del_len:
+                del_d.add(x)
+        else:
+            insert_base = random.choice(["A", "C", "T", "G"])
             ins_d[x] = insert_base + original_base
 
-    return (sub_d, ins_d)
+    return (sub_d, ins_d, del_d)
 
 
-def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, num_subs, num_insertions, num_deletions):
+def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, pre_mutated_del, num_subs, num_insertions, num_deletions):
     """
     Generate a monomorphic allele sequence.
 
@@ -229,24 +237,29 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
     deletion_positions : array of int
         Array of positions where bases are deleted.
     """
-    num_mutations = num_subs + num_deletions + num_insertions
-    positions = random.choice(eligible_positions, size=num_mutations, replace=False)
-    subs_positions = positions[: num_subs]
-    deletion_positions = positions[num_subs: (num_subs + num_deletions)]
-    insertion_positions = positions[(num_subs + num_deletions): len(positions)]
 
     # Copy the original sequence in a way that easily allows mutations
     # while preserving position information
     new_indexed_seq = list(seq_str)
 
-    for i in subs_positions:
-        new_indexed_seq[i] = pre_mutated_sub[i]
+    subs_positions=[]
+    deletion_positions=[]
+    insertion_positions=[]
 
-    for i in deletion_positions:
-        new_indexed_seq[i] = ""
+    if num_subs > 0:
+        subs_positions = random.choice(list(pre_mutated_sub.keys()), size=num_subs, replace=False)
+        for i in subs_positions:
+            new_indexed_seq[i] = pre_mutated_sub[i]
 
-    for i in insertion_positions:
-        new_indexed_seq[i] = pre_mutated_ins[i]
+    if num_deletions > 0:
+        deletion_positions = random.choice(list(pre_mutated_del), size=num_deletions, replace=False)
+        for i in deletion_positions:
+            new_indexed_seq[i] = ""
+
+    if num_insertions > 0:
+        insertion_positions =random.choice(list(pre_mutated_ins.keys()), size=num_insertions, replace=False)
+        for i in insertion_positions:
+             new_indexed_seq[i] = pre_mutated_ins[i]
 
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
@@ -278,7 +291,7 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
     num_deletions : int
         Number of base deletions to make.
     mono : bool
-        Specificies whether or not to generate monomorphic alleles.
+        Specifies whether or not to generate monomorphic alleles.
     summary_file_path : str, optional
         Path to summary file where a list of positions and corresponding
         mutations will be written.
@@ -291,7 +304,7 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
             snp_list_file.write("Replicate\tPosition\tOriginalBase\tNewBase\n")
 
         if mono:
-            pre_mutated_sub, pre_mutated_ins = mutate_all(seq_str, eligible_positions)
+            pre_mutated_sub, pre_mutated_ins, pre_mutated_del = mutate_all(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
 
         for replicate in range(1, num_sims + 1):
             print("Creating replicate %i" % replicate)
@@ -302,7 +315,7 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
                     build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
             else:
                 new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
-                    build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, num_subs, num_insertions, num_deletions)
+                    build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, pre_mutated_del, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
@@ -367,8 +380,8 @@ def parse_arguments(system_args):
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
     parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variance from a pool of eligible positions of the specified size")
-    parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
     parser.add_argument('-m', '--mono', dest="mono", action='store_true', help="Monomorphic Alleles")
+    parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
     return args
