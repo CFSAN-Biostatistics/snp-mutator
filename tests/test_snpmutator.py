@@ -18,7 +18,12 @@ import unittest
 from testfixtures import TempDirectory
 import random
 import argparse
-from itertools import izip_longest
+try:
+  # Python 3
+  from itertools import zip_longest
+except ImportError:
+  # Python 2
+  from itertools import izip_longest as zip_longest
 from snpmutator import snpmutator
 
 
@@ -142,7 +147,7 @@ def read_fasta_seq_record(file_path):
     """
     with open(file_path) as handle:
         iter = SeqIO.parse(handle, 'fasta')
-        return iter.next()
+        return next(iter)
 
 
 def compare_fasta_files(file_path1, file_path2):
@@ -167,7 +172,7 @@ def compare_fasta_files(file_path1, file_path2):
             iter1 = SeqIO.parse(handle1, 'fasta')
             iter2 = SeqIO.parse(handle2, 'fasta')
             fillvalue = object()
-            paired_records = izip_longest(iter1, iter2, fillvalue=fillvalue)
+            paired_records = zip_longest(iter1, iter2, fillvalue=fillvalue)
             return all(r1.__dict__ == r2.__dict__ for r1, r2 in paired_records)
 
 
@@ -195,7 +200,7 @@ def compare_mutated_fasta_files(original_file_path, mutated_file_path):
             iter1 = SeqIO.parse(handle1, 'fasta')
             iter2 = SeqIO.parse(handle2, 'fasta')
             fillvalue = object()
-            paired_records = izip_longest(iter1, iter2, fillvalue=fillvalue)
+            paired_records = zip_longest(iter1, iter2, fillvalue=fillvalue)
             for r1, r2 in paired_records:
                 if type(r1) != type(r2):
                     return False
@@ -268,7 +273,8 @@ class TestSnpmutator(unittest.TestCase):
         """Test various numbers of substitutions.
         """
         directory = TempDirectory()
-        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        dna = "GCCAAATCGG"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
         args.num_sims = 1
@@ -319,7 +325,8 @@ class TestSnpmutator(unittest.TestCase):
         """Test various numbers of insertions.
         """
         directory = TempDirectory()
-        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        dna = "GCCAAATCGG"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
         args.num_sims = 1
@@ -349,7 +356,8 @@ class TestSnpmutator(unittest.TestCase):
         """Test various numbers of deletions.
         """
         directory = TempDirectory()
-        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        dna = "GCCAAATCGG"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
         args.num_sims = 1
@@ -379,7 +387,8 @@ class TestSnpmutator(unittest.TestCase):
         """Test a mix of substitutions, inserts, and deletes.
         """
         directory = TempDirectory()
-        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
+        dna = "GCCAAATCGG"
+        original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
         args = argparse.Namespace()
         args.input_fasta_file = original_file_path
         args.num_sims = 1
