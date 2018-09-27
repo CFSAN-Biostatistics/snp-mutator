@@ -37,4 +37,4 @@ If you installed with pip, you can uninstall from the command line::
 Requirements
 ------------
 
-SNP Mutator requires requires python version 2.6 or 2.7. It has not been tested on other python versions.
+SNP Mutator requires requires python version 2.7, 3.4, or 3.5. It has not been tested on other python versions.
