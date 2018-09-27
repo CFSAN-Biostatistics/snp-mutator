@@ -8,8 +8,8 @@ SNP Mutator
         :target: https://pypi.python.org/pypi/snp-mutator
 
 .. Image showing the PyPi download per month count  - links to PyPI
-.. image:: https://img.shields.io/pypi/dm/snp-mutator.svg
-        :target: https://pypi.python.org/pypi/snp-mutator
+.. .. image:: https://img.shields.io/pypi/dm/snp-mutator.svg
+..        :target: https://pypi.python.org/pypi/snp-mutator
 
 .. Image showing the Travis Continuous Integration test status, commented out for now
 .. .. image:: https://img.shields.io/travis/CFSAN-Biostatistics/snp-mutator.svg
