@@ -8,8 +8,8 @@ SNP Mutator
         :target: https://pypi.python.org/pypi/snp-mutator
 
 .. Image showing the PyPi download per month count  - links to PyPI
-.. image:: https://img.shields.io/pypi/dm/snp-mutator.svg
-        :target: https://pypi.python.org/pypi/snp-mutator
+.. .. image:: https://img.shields.io/pypi/dm/snp-mutator.svg
+..        :target: https://pypi.python.org/pypi/snp-mutator
 
 .. Image showing the Travis Continuous Integration test status, commented out for now
 .. .. image:: https://img.shields.io/travis/CFSAN-Biostatistics/snp-mutator.svg
@@ -34,8 +34,9 @@ Features
 * Reads a fasta file and generates any number of mutated fasta replicate files.
 * Mutations can be any number of single-base substitutions, insertions, and deletions at randomly 
   chosen positions, uniformly distributed across the genome.
+* Mutations can be chosen from a subset of all possible positions.
 * Generates a summary file listing the original base and the mutation for all mutated positions.
-
+* Mutations can be either monomorphic or polymorphic. 
 
 Citing SNP Mutator
 --------------------------------------

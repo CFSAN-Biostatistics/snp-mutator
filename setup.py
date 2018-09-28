@@ -21,7 +21,7 @@ requirements = [
 ]
 
 # Below needed for Python 2.6
-if sys.version_info < (2,7,):
+if sys.version_info < (2, 7, ):
     requirements.append('argparse')
 
 test_requirements = [
@@ -30,7 +30,7 @@ test_requirements = [
 
 setup(
     name='snp-mutator',
-    version='0.2.0',
+    version='1.0.0',
     description="Generate mutated sequence files from a reference genome.",
     long_description=readme + '\n\n' + history,
     author="Hugh Rand",
