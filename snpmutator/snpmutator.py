@@ -10,7 +10,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 
 
-__version__ = '0.2.0'
+__version__ = '1.0.0'
 
 
 def read_fasta_sequence(fasta_file_path):
@@ -129,18 +129,17 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     deletion_positions : array of int
         Array of positions where bases are deleted.
     """
-    substitution_choices = {"A" : ["C", "T", "G"],
-                            "C" : ["A", "T", "G"],
-                            "T" : ["C", "A", "G"],
-                            "G" : ["C", "T", "A"],
-                           }
+    substitution_choices = {"A": ["C", "T", "G"],
+                            "C": ["A", "T", "G"],
+                            "T": ["C", "A", "G"],
+                            "G": ["C", "T", "A"],
+                            }
 
-    seq_length = len(seq_str)
     num_mutations = num_subs + num_deletions + num_insertions
     positions = random.choice(eligible_positions, size=num_mutations, replace=False)
     subs_positions = positions[: num_subs]
-    deletion_positions = positions[num_subs : (num_subs + num_deletions)]
-    insertion_positions = positions[(num_subs + num_deletions) : len(positions)]
+    deletion_positions = positions[num_subs: (num_subs + num_deletions)]
+    insertion_positions = positions[(num_subs + num_deletions): len(positions)]
 
     # Copy the original sequence in a way that easily allows mutations
     # while preserving position information
@@ -166,9 +165,108 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, summary_file_path=None):
+def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
     """
-    Generate multiple random mutations of a reference sequence, repeatedly 
+    Generate a set mutation for each position in eligible positions.
+
+    Parameters
+    ----------
+    seq_str: str
+        Original sequnce string
+    eligible_pos : list of integers
+        Positions where the original base is eligible for mutating
+
+    Returns
+    -------
+    sub_d : Dictionary with int keys and str values
+        Dictionary with positions taken from eligible positions as the key
+        and the substituted allele as the value.
+    ins_d : Dictionary with int keys and str values
+        Dictionary with positions taken from eligible positions as the key
+        and the inserted allele and original allele as the value.
+    """
+    substitution_choices = {"A": ["C", "T", "G"],
+                            "C": ["A", "T", "G"],
+                            "T": ["C", "A", "G"],
+                            "G": ["C", "T", "A"],
+                            }
+    sub_d = {}
+    ins_d = {}
+    del_d = set()
+
+    num_mutations = float(num_subs + num_insertions + num_deletions)
+    sub_len, ins_len, del_len = round(num_subs/num_mutations*len(eligible_pos)), round(num_insertions/num_mutations*len(eligible_pos)),round(num_deletions/num_mutations*len(eligible_pos))
+
+    for x in eligible_pos:
+        original_base = seq_str[x]
+        if len(sub_d.keys()) < sub_len:
+            upper_original_base = original_base.upper()
+            sub_d[x] = random.choice(substitution_choices[upper_original_base])
+        elif len(del_d) < del_len:
+                del_d.add(x)
+        else:
+            insert_base = random.choice(["A", "C", "T", "G"])
+            ins_d[x] = insert_base + original_base
+
+    return (sub_d, ins_d, del_d)
+
+
+def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, pre_mutated_del, num_subs, num_insertions, num_deletions):
+    """
+    Generate a monomorphic allele sequence.
+
+    Parameters
+    ----------
+    seq_str: str
+        Original sequnce string
+    eligible_positions : list of integers
+        Positions where the original base is eligible for mutating
+
+    Returns
+    -------
+    new_indexed_seq : list of str
+        List indexed by original position containing strings of bases.  Each
+        string can be 0 - 2 bases long, where a zero length string indicates
+        a deletion at the position, a string containing a single base indicates
+        no mutation at the position, and a string containing two bases
+        indicates an insertion prior to the original base at the position.
+    subs_positions : array of int
+        Array of positions where substitions are introduced.
+    insertion_positions : array of int
+        Array of positions where insertions are introduced.
+    deletion_positions : array of int
+        Array of positions where bases are deleted.
+    """
+
+    # Copy the original sequence in a way that easily allows mutations
+    # while preserving position information
+    new_indexed_seq = list(seq_str)
+
+    subs_positions=[]
+    deletion_positions=[]
+    insertion_positions=[]
+
+    if num_subs > 0:
+        subs_positions = random.choice(list(pre_mutated_sub.keys()), size=num_subs, replace=False)
+        for i in subs_positions:
+            new_indexed_seq[i] = pre_mutated_sub[i]
+
+    if num_deletions > 0:
+        deletion_positions = random.choice(list(pre_mutated_del), size=num_deletions, replace=False)
+        for i in deletion_positions:
+            new_indexed_seq[i] = ""
+
+    if num_insertions > 0:
+        insertion_positions =random.choice(list(pre_mutated_ins.keys()), size=num_insertions, replace=False)
+        for i in insertion_positions:
+             new_indexed_seq[i] = pre_mutated_ins[i]
+
+    return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
+
+
+def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, mono, summary_file_path=None):
+    """
+    Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
 
     Parameters
@@ -192,6 +290,8 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         original base at positions having insertions.
     num_deletions : int
         Number of base deletions to make.
+    mono : bool
+        Specifies whether or not to generate monomorphic alleles.
     summary_file_path : str, optional
         Path to summary file where a list of positions and corresponding
         mutations will be written.
@@ -203,12 +303,19 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         if summary_file_path:
             snp_list_file.write("Replicate\tPosition\tOriginalBase\tNewBase\n")
 
+        if mono:
+            pre_mutated_sub, pre_mutated_ins, pre_mutated_del = mutate_all(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+
         for replicate in range(1, num_sims + 1):
             print("Creating replicate %i" % replicate)
             replicate_name = base_file_name + "_mutated_" + str(replicate)
 
-            new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
-                build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+            if not mono:
+                new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
+                    build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+            else:
+                new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
+                    build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, pre_mutated_del, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
@@ -244,7 +351,7 @@ def parse_arguments(system_args):
                a specified number of randomly generated base substitutions, insertions, and deletions.
                Outputs the mutated genomes, and optionally, a summary file listing the mutations by
                position."""
-               
+
     def non_negative_int(value):
         try:
             ivalue = int(value)
@@ -253,7 +360,7 @@ def parse_arguments(system_args):
         if ivalue < 0:
             raise argparse.ArgumentTypeError("Must be >= 0")
         return ivalue
-               
+
     def positive_int(value):
         try:
             ivalue = int(value)
@@ -272,6 +379,8 @@ def parse_arguments(system_args):
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
+    parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variance from a pool of eligible positions of the specified size")
+    parser.add_argument('-m', '--mono', dest="mono", action='store_true', help="Monomorphic Alleles")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
@@ -308,17 +417,19 @@ def main(args):
     eligible_positions = get_eligible_positions(seq_str)
     eligible_seq_length = len(eligible_positions)
 
+    if args.subset_len > 0:
+        eligible_positions = random.choice(eligible_positions, args.subset_len, replace=False)
+        eligible_seq_length = len(eligible_positions)
+
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
     if num_mutations > eligible_seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
         sys.exit()
 
     run_simulations(seq_str, eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
-                    args.num_insertions, args.num_deletions, args.summary_file)
+                    args.num_insertions, args.num_deletions, args.mono, args.summary_file)
 
 
 if __name__ == '__main__':
     args = parse_arguments(sys.argv[1:])
     main(args)
-
-

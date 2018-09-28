@@ -2,4 +2,4 @@
 
 __author__ = 'Hugh Rand'
 __email__ = 'Hugh.Rand@fda.hhs.gov'
-__version__ = '0.2.0'
+__version__ = '1.0.0'
