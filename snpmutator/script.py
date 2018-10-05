@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import absolute_import
+
 import argparse
-import sys
-import os.path
-from numpy import random
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
+from numpy import random
+import os.path
+import sys
 
-
-__version__ = '1.0.0'
-
+from snpmutator.__init__ import __version__
+from snpmutator import vcf_writer
 
 def read_fasta_sequence(fasta_file_path):
     """
@@ -109,7 +110,7 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     num_subs : int
         Number of base substitutions to make.
     num_insertions : int
-        Number of base insertions to make.  Insertions are placed before the
+        Number of base insertions to make.  Insertions are placed after the
         original base at positions having insertions.
     num_deletions : int
         Number of base deletions to make.
@@ -121,7 +122,7 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
         string can be 0 - 2 bases long, where a zero length string indicates
         a deletion at the position, a string containing a single base indicates
         no mutation at the position, and a string containing two bases
-        indicates an insertion prior to the original base at the position.
+        indicates an insertion after the original base at the position.
     subs_positions : array of int
         Array of positions where substitions are introduced.
     insertion_positions : array of int
@@ -160,7 +161,7 @@ def build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num
     for i in insertion_positions:
         original_base = seq_str[i]
         insert_base = random.choice(["A", "C", "T", "G"], size=1)[0]
-        new_indexed_seq[i] = insert_base + original_base
+        new_indexed_seq[i] = original_base + insert_base
 
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
@@ -184,6 +185,8 @@ def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
     ins_d : Dictionary with int keys and str values
         Dictionary with positions taken from eligible positions as the key
         and the inserted allele and original allele as the value.
+    del_d : set of int
+        Set of positions having deletions.
     """
     substitution_choices = {"A": ["C", "T", "G"],
                             "C": ["A", "T", "G"],
@@ -206,7 +209,7 @@ def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
                 del_d.add(x)
         else:
             insert_base = random.choice(["A", "C", "T", "G"])
-            ins_d[x] = insert_base + original_base
+            ins_d[x] = original_base + insert_base
 
     return (sub_d, ins_d, del_d)
 
@@ -229,7 +232,7 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
         string can be 0 - 2 bases long, where a zero length string indicates
         a deletion at the position, a string containing a single base indicates
         no mutation at the position, and a string containing two bases
-        indicates an insertion prior to the original base at the position.
+        indicates an insertion after the original base at the position.
     subs_positions : array of int
         Array of positions where substitions are introduced.
     insertion_positions : array of int
@@ -264,7 +267,7 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, mono, summary_file_path=None):
+def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, mono, summary_file_path=None, vcf_file_path=None):
     """
     Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
@@ -286,7 +289,7 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
     num_subs : int
         Number of base substitutions to make.
     num_insertions : int
-        Number of base insertions to make.  Insertions are placed before the
+        Number of base insertions to make.  Insertions are placed after the
         original base at positions having insertions.
     num_deletions : int
         Number of base deletions to make.
@@ -295,9 +298,15 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
     summary_file_path : str, optional
         Path to summary file where a list of positions and corresponding
         mutations will be written.
+    vcf_file_path : str, optional
+        Path to VCF file where a list of positions and corresponding
+        mutations will be written.
     """
     if summary_file_path:
         snp_list_file = open(summary_file_path, "w")
+
+    if vcf_file_path:
+        vcf_writer_obj = vcf_writer.VcfWriter(seq_str, vcf_file_path)
 
     try:
         if summary_file_path:
@@ -328,9 +337,15 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
                 for pos, change in sorted(summary_list):
                     snp_list_file.write("%s\t%i\t%s\t%s\n" % (replicate_name, pos + 1, seq_str[pos], change))
 
+            if vcf_file_path:
+                vcf_writer_obj.store_replicate_mutations(replicate_name, new_indexed_seq, subs_positions, insertion_positions, deletion_positions)
+
     finally:
         if summary_file_path:
             snp_list_file.close()
+        if vcf_file_path:
+            #vcf_writer_obj.write(base_file_name, ["repl1", "repl2"])  # TODO: supply the replicate names
+            vcf_writer_obj.write(base_file_name)
 
 
 def parse_arguments(system_args):
@@ -379,15 +394,16 @@ def parse_arguments(system_args):
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
-    parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variance from a pool of eligible positions of the specified size")
-    parser.add_argument('-m', '--mono', dest="mono", action='store_true', help="Monomorphic Alleles")
+    parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variants from a pool of eligible positions of the specified size")
+    parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
+    parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
     return args
 
 
-def main(args):
+def run_from_args(args):
     """
     Generate multiple random mutations of a reference sequence.
 
@@ -427,9 +443,45 @@ def main(args):
         sys.exit()
 
     run_simulations(seq_str, eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
-                    args.num_insertions, args.num_deletions, args.mono, args.summary_file)
+                    args.num_insertions, args.num_deletions, args.mono, args.summary_file, args.vcf_file)
 
 
-if __name__ == '__main__':
+def run_from_line(line):
+    """Run a command with a command line.
+
+    This function is intended to be used for unit testing.
+
+    Parameters
+    ----------
+    line : str
+        Command line.
+
+    Returns
+    -------
+    Returns 0 on success if it completes with no exceptions.
+    """
+    argv = line.split()
+    args = parse_arguments(argv)
+    return run_from_args(args)
+
+
+def main():
+    """This is the main function which is magically turned into an executable
+    script by the setuptools entry_points.  See setup.py.
+
+    To run this function as a script, first install the package:
+        $ python setup.py develop
+        or
+        $ pip install --user snpmutator
+
+    Parameters
+    ----------
+    This function must not take any parameters
+
+    Returns
+    -------
+    The return value is passed to sys.exit()
+    """
     args = parse_arguments(sys.argv[1:])
-    main(args)
+    return run_from_args(args)
+

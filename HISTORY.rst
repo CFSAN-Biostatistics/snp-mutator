@@ -8,6 +8,8 @@ History
 * Allow for mutations to come from a smaller pool rather than
   all eligible positions.
 * Allow for generation of monomorphic alleles.
+* Add capability to generate VCF output files.
+* The installer creates an executable script called ``snpmutator``.
 
 0.2.0 (2016-01-15)
 ---------------------

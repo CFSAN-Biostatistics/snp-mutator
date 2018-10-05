@@ -2,7 +2,7 @@
 Usage
 ========
 
-SNP Mutator is a single python script called ``snpmutator.py``.  After installation,
+SNP Mutator is a single script called ``snpmutator``.  After installation,
 it will be on your path, ready to use.
 
 Quick Start
@@ -28,9 +28,10 @@ Step 3 - Generate the mutated sequences::
     # -i 1, one insertion in each mutated sequence
     # -d 0, zero deletions in each mutated sequence
     # -o summary.tsv, generate a mutation summary file called summary.tsv
+    # -v variants.vcf, generate a VCF file of mutations
     # -p 5, choose mutations from a size 5 pool of all possible positions
     # -m , choose monomorphic alleles
-    $ snpmutator.py -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv -p 5 -m NC_011149.fasta
+    $ snpmutator -r 1 -n 2 -s 2 -i 1 -d 0 -o summary.tsv -v variants.vcf -p 5 -m NC_011149.fasta
 
 Step 4 - Examine the results::
 
@@ -42,7 +43,7 @@ Input Files
 -----------
 The only input file is the reference fasta file.
 
-Note: Multi-fasta files may produce unexpected results.  All the sequences are concatenated 
+Note: Multi-fasta files may produce unexpected results.  All the sequences are concatenated
 into a single sequence.  All description lines after the first are discarded.
 
 
@@ -51,19 +52,23 @@ Output Files
 
 Summary
 ~~~~~~~
-An optional summary file in tab-delimited format lists the positions of the mutations for 
+An optional summary file in tab-delimited format lists the positions of the mutations for
 each of the replicates with the original base and the resulting mutation at each position.
+
+VCF
+~~~
+An optional VCF file lists the mutations in Variant Call Format.
 
 Replicate Files
 ~~~~~~~~~~~~~~~
-Multiple mutated replicate files are generated in the current working directory.  Files are 
+Multiple mutated replicate files are generated in the current working directory.  Files are
 named with the basename of the original reference file, suffixed with ``_mutated_#.fasta``.
 
 For example, if the reference file name is ``NC_011149.fasta``, the first two replicate files
 are named ``NC_011149_mutated_1.fasta`` and ``NC_011149_mutated_2.fasta``.
 
 The defline (description) of the generated fasta files is copied from the original reference
-fasta file, but with a suffix describing the mutations.  For example, the defline suffix 
+fasta file, but with a suffix describing the mutations.  For example, the defline suffix
 ``(mutated s=2 i=1 d=0)`` indicates there are two substitutions, one insertion, and zero deletions.
 
 
@@ -72,18 +77,18 @@ Command Reference
 
 ::
 
-  usage: snpmutator.py [-h] [-o FILE] [-n INT] [-s INT] [-i INT] [-d INT]
-                       [-r INT]
+  usage: snpmutator [-h] [-o FILE] [-n INT] [-s INT] [-i INT] [-d INT]
+                       [-r INT] [-p INT] [-m] [-v FILE] [--version]
                        input_fasta_file
-  
+
   Generate mutated sequence files from a reference genome. Takes a fasta file
   and creates a specified number of randomly generated base substitutions,
   insertions, and deletions. Outputs the mutated genomes, and optionally, a
   summary file listing the mutations by position.
-  
+
   positional arguments:
     input_fasta_file      Input fasta file.
-  
+
   optional arguments:
     -h, --help            show this help message and exit
     -o FILE, --summary FILE
@@ -100,3 +105,8 @@ Command Reference
     -r INT, --random-seed INT
                           Random number seed; if not set, the results are not
                           reproducible. (default: None)
+    -p INT, --pool INT    Choose variants from a pool of eligible positions of
+                          the specified size (default: 0)
+    -m, --mono            Create monomorphic alleles (default: False)
+    -v FILE, --vcf FILE   Output VCF file. (default: None)
+    --version             show program's version number and exit
