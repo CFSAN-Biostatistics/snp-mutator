@@ -8,6 +8,7 @@ CFSAN Bioinformatics Team
 * James Pettengill
 * Hugh Rand
 * Steve Davis
+* Nathan Xue
 
 External Contributors
 ---------------------
