@@ -188,6 +188,8 @@ def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
     del_d : set of int
         Set of positions having deletions.
     """
+    print("Creating monomorphic mutations in %d positions." % len(eligible_pos), file=sys.stderr)
+
     substitution_choices = {"A": ["C", "T", "G"],
                             "C": ["A", "T", "G"],
                             "T": ["C", "A", "G"],
@@ -202,7 +204,7 @@ def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
 
     for x in eligible_pos:
         original_base = seq_str[x]
-        if len(sub_d.keys()) < sub_len:
+        if len(sub_d) < sub_len:
             upper_original_base = original_base.upper()
             sub_d[x] = random.choice(substitution_choices[upper_original_base])
         elif len(del_d) < del_len:
