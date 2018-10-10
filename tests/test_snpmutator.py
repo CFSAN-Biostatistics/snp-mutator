@@ -28,6 +28,23 @@ except ImportError:
 from snpmutator import script as snpmutator
 
 
+def make_default_args(original_fasta_file_path):
+    """Create a default set of arguments that does nothing.
+    """
+    args = argparse.Namespace()
+    args.input_fasta_file = original_fasta_file_path
+    args.num_sims = 0
+    args.num_subs = 0
+    args.num_insertions = 0
+    args.num_deletions = 0
+    args.random_seed = 0
+    args.subset_len = 0
+    args.group_size = None
+    args.mono = False
+    args.summary_file = None
+    args.vcf_file = None
+    return args
+
 def make_random_dna_string(length, allowed_bases):
     """
     Create random DNA sequence string of the specified length.
@@ -256,17 +273,9 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_subs = 0
-        args.num_insertions = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
         snpmutator.run_from_args(args)
         no_change = compare_mutated_fasta_files(original_file_path, "original_mutated_1.fasta")
         self.assertTrue(no_change, "Generated fasta file does not match original fasta file")
@@ -277,16 +286,9 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "GCCAAATCGG"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_insertions = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_subs = 1
         snpmutator.run_from_args(args)
@@ -309,16 +311,9 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "12345aaaaaAAAAA12345"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_insertions = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_subs = 10
         snpmutator.run_from_args(args)
@@ -331,16 +326,9 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "TTTTAATTTT"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_subs = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_insertions = 1
         snpmutator.run_from_args(args)
@@ -363,16 +351,9 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "GCCAAATCGG"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_subs = 0
-        args.num_insertions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_deletions = 1
         snpmutator.run_from_args(args)
@@ -395,14 +376,9 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "GGGGGGGGGG"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_subs = 1
         args.num_insertions = 1
@@ -430,14 +406,9 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_subs = 4
         args.num_insertions = 4
@@ -450,14 +421,10 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
+        args = make_default_args(original_file_path)
         args.random_seed = 1
+        args.num_sims = 1
         args.subset_len = 9
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_subs = 4
         args.num_insertions = 3
@@ -471,14 +438,9 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 10, "ACGTSNWR")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
+        args.num_sims = 1
 
         args.num_subs = 10
         args.num_insertions = 0
@@ -491,17 +453,12 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
         args.num_sims = 3
         args.num_subs = 2
         args.num_insertions = 2
         args.num_deletions = 2
-        args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
 
         snpmutator.run_from_args(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -516,17 +473,13 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
         args.num_sims = 3
         args.num_subs = 2
         args.num_insertions = 2
         args.num_deletions = 2
-        args.random_seed = 1
         args.subset_len = 500
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
 
         snpmutator.run_from_args(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -541,17 +494,13 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
         args.num_sims = 3
         args.num_subs = 2
         args.num_insertions = 2
         args.num_deletions = 2
-        args.random_seed = 1
-        args.subset_len = 0
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         snpmutator.run_from_args(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -566,17 +515,14 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
         args.num_sims = 3
         args.num_subs = 2
         args.num_insertions = 2
         args.num_deletions = 2
-        args.random_seed = 1
         args.subset_len = 500
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         snpmutator.run_from_args(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
@@ -591,16 +537,9 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_subs = 0
-        args.num_insertions = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.vcf_file = None
+        args.num_sims = 1
 
         summary_file_path = os.path.join(directory.path, "original_snpListMutated.txt")
 
@@ -619,16 +558,9 @@ class TestSnpmutator(unittest.TestCase):
         """
         directory = TempDirectory()
         original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 1
-        args.num_subs = 0
-        args.num_insertions = 0
-        args.num_deletions = 0
+        args = make_default_args(original_file_path)
         args.random_seed = 1
-        args.subset_len = 0
-        args.mono = False
-        args.summary_file = None
+        args.num_sims = 1
 
         vcf_file_path = os.path.join(directory.path, "test.vcf")
 
@@ -648,14 +580,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
-        args.num_sims = 2
+        args = make_default_args(original_file_path)
         args.random_seed = 1
+        args.num_sims = 2
         args.subset_len = 1
-        args.mono = False
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_subs = 1
         args.num_insertions = 0
@@ -690,13 +618,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
         args.random_seed = 1
         args.subset_len = 8
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_sims = 2
         args.num_subs = 8
@@ -713,13 +638,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
         args.random_seed = 1
         args.subset_len = 8
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_sims = 2
         args.num_subs = 0
@@ -736,13 +658,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
         args.random_seed = 1
         args.subset_len = 8
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_sims = 2
         args.num_subs = 0
@@ -759,13 +678,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
         args.random_seed = 1
         args.subset_len = 9
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_sims = 2
         args.num_subs = 3
@@ -782,13 +698,10 @@ class TestSnpmutator(unittest.TestCase):
         directory = TempDirectory()
         dna = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         original_file_path = write_fixed_dna_fasta(dna, directory.path, "original.fasta")
-        args = argparse.Namespace()
-        args.input_fasta_file = original_file_path
+        args = make_default_args(original_file_path)
         args.random_seed = 1
         args.subset_len = 6
         args.mono = True
-        args.summary_file = None
-        args.vcf_file = None
 
         args.num_sims = 2
         args.num_subs = 3
