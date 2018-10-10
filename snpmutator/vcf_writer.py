@@ -28,7 +28,6 @@ class VcfWriter(object):
         self.file_path = file_path
         self.replicate_names = list()
         self.known_alts = defaultdict(list) # key=pos value-list of alts
-        self.indel_positions = set()        # set of positions having at least one indel ALT
         self.alt_dict = dict()              # key=(pos, replicate) value=alt num
 
     def store_replicate_mutations(self, replicate_name, new_indexed_seq, subs_positions, insertion_positions, deletion_positions):
@@ -63,7 +62,6 @@ class VcfWriter(object):
 
         # Store the insertions
         for pos in insertion_positions:
-            self.indel_positions.add(pos)
             alt = new_indexed_seq[pos]
             if alt not in self.known_alts[pos]:
                 self.known_alts[pos].append(alt)
@@ -72,7 +70,6 @@ class VcfWriter(object):
 
         # Store the deletions
         for pos in deletion_positions:
-            self.indel_positions.add(pos)
             alt = "*"
             if alt not in self.known_alts[pos]:
                 self.known_alts[pos].append(alt)
