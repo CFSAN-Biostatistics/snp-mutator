@@ -72,9 +72,8 @@ def write_fasta_sequence(seq_id, file_path, sequence_list, mutations):
     SeqIO.write([record], file_path, "fasta")
 
 
-def get_eligible_positions(seq_str):
-    """
-    Find all the positions where the original base is ACTG.  Those are the only
+def get_all_eligible_positions(seq_str):
+    """Find all the positions where the original base is ACTG.  Those are the only
     positions eligible for mutation.
 
     Parameters
@@ -269,16 +268,15 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, mono, summary_file_path=None, vcf_file_path=None):
-    """
-    Generate multiple random mutations of a reference sequence, repeatedly
+def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, pool_size, group_size, mono, summary_file_path=None, vcf_file_path=None):
+    """Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
 
     Parameters
     ----------
     seq_str : str
         Original sequence string.
-    eligible_positions : list of integers
+    all_eligible_positions : list of integers
         Positions where the original base is eligible for mutating
     base_file_name : str
         The base file name of the original reference with the extension
@@ -295,6 +293,10 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         original base at positions having insertions.
     num_deletions : int
         Number of base deletions to make.
+    pool_size : int
+        If greater than 0, mutations are drawn from a subset of all eligible positions of size pool_size.
+    group_size : int
+        if greater than zero, a new pool is choosen after each group of group_size replicates is created.
     mono : bool
         Specifies whether or not to generate monomorphic alleles.
     summary_file_path : str, optional
@@ -314,11 +316,23 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         if summary_file_path:
             snp_list_file.write("Replicate\tPosition\tOriginalBase\tNewBase\n")
 
-        if mono:
-            pre_mutated_sub, pre_mutated_ins, pre_mutated_del = mutate_all(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+        # When there is no pooling, we create monomorphic mutations only once
+        if pool_size == 0:
+            eligible_positions = all_eligible_positions
+            if mono:
+                pre_mutated_sub, pre_mutated_ins, pre_mutated_del = mutate_all(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
 
         for replicate in range(1, num_sims + 1):
-            print("Creating replicate %i" % replicate)
+            # Create a new pool after each group of group_size replicates
+            need_new_pool = pool_size > 0 and (replicate - 1) % group_size == 0
+            if need_new_pool:
+                print("Creating pool of %d positions." % pool_size, file=sys.stderr)
+                eligible_positions = random.choice(all_eligible_positions, pool_size, replace=False)
+                if mono:
+                    pre_mutated_sub, pre_mutated_ins, pre_mutated_del = mutate_all(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
+
+            print("Creating replicate %i" % replicate, file=sys.stderr)
+
             replicate_name = base_file_name + "_mutated_" + str(replicate)
 
             if not mono:
@@ -346,13 +360,11 @@ def run_simulations(seq_str, eligible_positions, base_file_name, seq_name, num_s
         if summary_file_path:
             snp_list_file.close()
         if vcf_file_path:
-            #vcf_writer_obj.write(base_file_name, ["repl1", "repl2"])  # TODO: supply the replicate names
             vcf_writer_obj.write(base_file_name)
 
 
 def parse_arguments(system_args):
-    """
-    Parse command line arguments.
+    """Parse command line arguments.
 
     Parameters
     ----------
@@ -397,6 +409,7 @@ def parse_arguments(system_args):
     parser.add_argument("-d", "--num-deletions",     metavar="INT",  dest="num_deletions",    type=non_negative_int, default=20,   help="Number of deletions.")
     parser.add_argument("-r", "--random-seed",       metavar="INT",  dest="random_seed",      type=int,              default=None, help="Random number seed; if not set, the results are not reproducible.")
     parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variants from a pool of eligible positions of the specified size")
+    parser.add_argument("-g", "--group",             metavar="INT",  dest="group_size",       type=positive_int,     default=None, help="Group size. When greater than zero, this parameter chooses a new pool of positions for each group of replicates.")
     parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
     parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
@@ -406,8 +419,7 @@ def parse_arguments(system_args):
 
 
 def run_from_args(args):
-    """
-    Generate multiple random mutations of a reference sequence.
+    """Generate multiple random mutations of a reference sequence.
 
     Parameters
     ----------
@@ -420,6 +432,9 @@ def run_from_args(args):
     --------
     parse_arguments()
     """
+    if args.group_size is None:
+        args.group_size = args.num_sims  # just one big group
+
     # Input file arg
     in_file_path = args.input_fasta_file
     in_file_name = os.path.basename(in_file_path)
@@ -432,20 +447,19 @@ def run_from_args(args):
     seq_name, seq_str = read_fasta_sequence(in_file_path)
 
     # Find the eligible positions
-    eligible_positions = get_eligible_positions(seq_str)
-    eligible_seq_length = len(eligible_positions)
-
+    all_eligible_positions = get_all_eligible_positions(seq_str)
     if args.subset_len > 0:
-        eligible_positions = random.choice(eligible_positions, args.subset_len, replace=False)
-        eligible_seq_length = len(eligible_positions)
+        eligible_seq_length = args.subset_len
+    else:
+        eligible_seq_length = len(all_eligible_positions)
 
     num_mutations = args.num_subs + args.num_insertions + args.num_deletions
     if num_mutations > eligible_seq_length:
         print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
-        sys.exit()
+        sys.exit(1)
 
-    run_simulations(seq_str, eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
-                    args.num_insertions, args.num_deletions, args.mono, args.summary_file, args.vcf_file)
+    run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
+                    args.num_insertions, args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file)
 
 
 def run_from_line(line):

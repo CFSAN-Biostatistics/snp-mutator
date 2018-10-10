@@ -3,13 +3,16 @@
 History
 -------
 
-1.0.0 (2018-09-07)
+1.0.0 (2018-10-10)
 ---------------------
-* Allow for mutations to come from a smaller pool rather than
-  all eligible positions.
-* Allow for generation of monomorphic alleles.
-* Add capability to generate VCF output files.
+* Mutations can be chosen from a subset (pool) of all possible positions.
+* Replicates can be partitioned into multiple groups with each group sharing a pool of eligible positions.
+* Mutations can be either monomorphic or polymorphic.
+* Add the capability to generate VCF output files.
 * The installer creates an executable script called ``snpmutator``.
+* Insertions are now placed after the original reference position, not before, as in prior versions of
+  snpmutator.  This means it will not be possible to exactly reproduce the results of prior versions
+  of this software.
 
 0.2.0 (2016-01-15)
 ---------------------
