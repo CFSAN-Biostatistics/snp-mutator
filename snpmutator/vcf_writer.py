@@ -7,6 +7,7 @@ from __future__ import absolute_import
 
 from collections import defaultdict
 import datetime
+import sys
 
 from snpmutator import __version__
 
@@ -27,7 +28,7 @@ class VcfWriter(object):
         self.reference = original_seq
         self.file_path = file_path
         self.replicate_names = list()
-        self.known_alts = defaultdict(list) # key=pos value-list of alts
+        self.known_alts = defaultdict(list) # key=pos value=list of alts
         self.alt_dict = dict()              # key=(pos, replicate) value=alt num
 
     def store_replicate_mutations(self, replicate_name, new_indexed_seq, subs_positions, insertion_positions, deletion_positions):
@@ -86,6 +87,7 @@ class VcfWriter(object):
         replicate_names : list of str
             List of sample names.
         """
+        print("Writing VCF file.", file=sys.stderr)
         with open(self.file_path, "w") as f:
             # Write the VCF file header sections.
             f.write('##fileformat=VCFv4.2\n')
@@ -103,9 +105,8 @@ class VcfWriter(object):
                 ref = self.reference[pos]
                 alt_str = ','.join(self.known_alts[pos])
                 fields = [chrom, str(pos+1), '.', ref, alt_str, '.', '.', '.', "GT"]
-                for replicate_name in self.replicate_names:
-                    key = (pos, replicate_name)
-                    gt = self.alt_dict.get(key, 0)  # default to ref if not found
-                    fields.append(str(gt))
+                # default to ref (0) if alt_dict has no variant for this (pos, replicate_name)
+                genotypes = [str(self.alt_dict.get((pos, replicate_name), 0)) for replicate_name in self.replicate_names]
+                fields.extend(genotypes)
                 f.write('\t'.join(fields))
                 f.write("\n")
