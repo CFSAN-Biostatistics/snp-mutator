@@ -11,6 +11,7 @@ import sys
 
 from snpmutator import __version__
 
+
 class VcfWriter(object):
     """Class to write VCF files for the mutated replicates.
     """
@@ -104,7 +105,7 @@ class VcfWriter(object):
             for pos in sorted(self.known_alts):
                 ref = self.reference[pos]
                 alt_str = ','.join(self.known_alts[pos])
-                fields = [chrom, str(pos+1), '.', ref, alt_str, '.', '.', '.', "GT"]
+                fields = [chrom, str(pos + 1), '.', ref, alt_str, '.', '.', '.', "GT"]
                 # default to ref (0) if alt_dict has no variant for this (pos, replicate_name)
                 genotypes = [str(self.alt_dict.get((pos, replicate_name), 0)) for replicate_name in self.replicate_names]
                 fields.extend(genotypes)

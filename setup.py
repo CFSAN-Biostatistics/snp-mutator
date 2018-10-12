@@ -58,7 +58,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    entry_points={'console_scripts': ['snpmutator = snpmutator.script:main'] },
+    entry_points={'console_scripts': ['snpmutator = snpmutator.script:main']},
     test_suite='tests',
     tests_require=test_requirements
 )
