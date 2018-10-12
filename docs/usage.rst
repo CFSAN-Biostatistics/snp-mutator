@@ -105,7 +105,7 @@ Command Reference
 ::
 
   usage: snpmutator [-h] [-o FILE] [-n INT] [-s INT] [-i INT] [-d INT] [-r INT]
-                    [-p INT] [-g INT] [-m] [-v FILE] [--version]
+                    [-p INT] [-g INT] [-m] [-v FILE] [-M FILE] [--version]
                     input_fasta_file
 
   Generate mutated sequence files from a reference genome. Takes a fasta file
@@ -139,4 +139,6 @@ Command Reference
                           replicates. (default: None)
     -m, --mono            Create monomorphic alleles (default: False)
     -v FILE, --vcf FILE   Output VCF file. (default: None)
+    -M FILE, --metrics FILE
+                          Output metrics file. (default: None)
     --version             show program's version number and exit
