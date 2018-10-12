@@ -32,12 +32,14 @@ Step 3 - Generate the mutated sequences::
     # -p 100000, choose mutations from a pool of 100000 positions
     # -g 100, partition the 1000 replicates into 10 groups of 100 replicates, with each group having a separate pool of positions
     # -m, create monomorphic alleles within each pool
-    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m NC_011149.fasta
+    # -M metrics, generate a metrics output file
+    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m -M metrics NC_011149.fasta
 
 Step 4 - Examine the results::
 
     $ ls NC_011149_mutated_*.fasta
     $ less summary.tsv
+    $ cat metrics
 
 
 Input Files

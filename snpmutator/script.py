@@ -7,12 +7,28 @@ import argparse
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
+from collections import defaultdict
 from numpy import random
 import os.path
 import sys
 
 from snpmutator.__init__ import __version__
 from snpmutator import vcf_writer
+
+
+class Metrics(object):
+    """Container of various metrics.
+    """
+    def __init__(self):
+        """Initialize the metrics.
+        """
+        self.replicates = 0
+        self.variant_positions = 0
+        self.monomorphic_variant_positions = 0
+        self.polymorphic_variant_positions = 0
+        self.single_replicate_positions = 0
+        self.multiple_replicate_positions = 0
+
 
 def read_fasta_sequence(fasta_file_path):
     """
@@ -305,7 +321,16 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
     vcf_file_path : str, optional
         Path to VCF file where a list of positions and corresponding
         mutations will be written.
+
+    Returns
+    -------
+    metrics : Metrics
+        Metrics describing the variant positions.
     """
+    # Metrics containers
+    position_variants = defaultdict(set) # key=pos value=set of variants
+    position_replicates = defaultdict(set) # key=pos value=set of replicates
+
     if summary_file_path:
         snp_list_file = open(summary_file_path, "w")
 
@@ -335,6 +360,7 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
 
             replicate_name = base_file_name + "_mutated_" + str(replicate)
 
+            # Mutate
             if not mono:
                 new_indexed_seq, subs_positions, insertion_positions, deletion_positions = \
                     build_mutated_seq(seq_str, eligible_positions, num_subs, num_insertions, num_deletions)
@@ -345,6 +371,18 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
             mutations = (num_subs, num_insertions, num_deletions)
             write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
 
+            # Collect metrics
+            for pos in subs_positions:
+                position_variants[pos].add(new_indexed_seq[pos])
+                position_replicates[pos].add(replicate_name)
+            for pos in insertion_positions:
+                position_variants[pos].add(new_indexed_seq[pos])
+                position_replicates[pos].add(replicate_name)
+            for pos in deletion_positions:
+                position_variants[pos].add(new_indexed_seq[pos])
+                position_replicates[pos].add(replicate_name)
+
+            # Write summary file
             if summary_file_path:
                 summary_list = list()
                 summary_list.extend([(pos, new_indexed_seq[pos]) for pos in subs_positions])
@@ -355,6 +393,22 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
 
             if vcf_file_path:
                 vcf_writer_obj.store_replicate_mutations(replicate_name, new_indexed_seq, subs_positions, insertion_positions, deletion_positions)
+
+        # Prepare metrics
+        metrics = Metrics()
+        metrics.replicates = num_sims
+        metrics.variant_positions = len(position_variants)
+        for pos in position_variants:
+            if len(position_variants[pos]) == 1:
+                metrics.monomorphic_variant_positions += 1
+            else:
+                metrics.polymorphic_variant_positions += 1
+        for pos in position_replicates:
+            if len(position_replicates[pos]) == 1:
+                metrics.single_replicate_positions += 1
+            else:
+                metrics.multiple_replicate_positions += 1
+        return metrics
 
     finally:
         if summary_file_path:
@@ -412,6 +466,7 @@ def parse_arguments(system_args):
     parser.add_argument("-g", "--group",             metavar="INT",  dest="group_size",       type=positive_int,     default=None, help="Group size. When greater than zero, this parameter chooses a new pool of positions for each group of replicates.")
     parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
     parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
+    parser.add_argument("-M", "--metrics",           metavar="FILE", dest="metrics_file",     type=str,              default=None, help="Output metrics file.")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
 
     args = parser.parse_args(system_args)
@@ -458,9 +513,17 @@ def run_from_args(args):
         print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
         sys.exit(1)
 
-    run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
+    metrics = run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
                     args.num_insertions, args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file)
 
+    if args.metrics_file:
+        with open(args.metrics_file, 'w') as f:
+            f.write("%d replicates\n" % metrics.replicates)
+            f.write("%d positions having any variants\n" % metrics.variant_positions)
+            f.write("%d positions having monomorphic variants\n" % metrics.monomorphic_variant_positions)
+            f.write("%d positions having polymorphic variants\n" % metrics.polymorphic_variant_positions)
+            f.write("%d variant positions found in exactly one replicate\n" % metrics.single_replicate_positions)
+            f.write("%d variant positions found in multiple replicates\n" % metrics.multiple_replicate_positions)
 
 def run_from_line(line):
     """Run a command with a command line.
