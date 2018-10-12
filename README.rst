@@ -44,10 +44,11 @@ Features
 Citing SNP Mutator
 --------------------------------------
 
-To cite SNP Mutator, please reference the SNP Mutator GitHub repository:
+To cite SNP Mutator, please cite the publication below:
 
-    https://github.com/CFSAN-Biostatistics/snp-mutator
-
+    `Davis S, Pettengill JB, Luo Y, Payne J, Shpuntoff A, Rand H, Strain E. (2015)
+    CFSAN SNP Pipeline: an automated method for constructing SNP matrices from next-generation sequence data.
+    PeerJ Computer Science 1:e20   https://doi.org/10.7717/peerj-cs.20 <https://doi.org/10.7717/peerj-cs.20>`_
 
 License
 -------
