@@ -39,6 +39,7 @@ Features
 * Generates a summary file listing the original base and the mutation for all mutated positions.
 * Mutations can be either monomorphic or polymorphic.
 * VCF file generation.
+* Various metrics can be saved to an output file.
 
 Citing SNP Mutator
 --------------------------------------

@@ -43,6 +43,7 @@ def make_default_args(original_fasta_file_path):
     args.mono = False
     args.summary_file = None
     args.vcf_file = None
+    args.metrics_file = None
     return args
 
 def make_random_dna_string(length, allowed_bases):
@@ -712,17 +713,50 @@ class TestSnpmutator(unittest.TestCase):
         mutated_seq_record2 = read_fasta_seq_record("original_mutated_2.fasta")
         self.assertEqual(str(mutated_seq_record1.seq), str(mutated_seq_record2.seq), "Monomorphic mix of mutations do not match, mutated seq 1=%s mutated seq 2=%s" % (str(mutated_seq_record1.seq), str(mutated_seq_record2.seq)))
 
+    def test_metrics(self):
+        """Verify that metrics are correct.
+        """
+        seq_str = "AAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT"
+        all_eligible_positions = [i for i in range(len(seq_str))]
+        base_file_name = "original"
+        seq_name = ""
+        num_sims = 2
+        num_subs = 3
+        num_deletions = 0
+        num_insertions = 0
+        pool_size = 0
+        group_size = num_sims
+        mono = True
+        metrics = snpmutator.run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, pool_size, group_size, mono)
+        self.assertEqual(metrics.replicates, 2, "Incorrect metrics.replicates")
+        self.assertEqual(metrics.variant_positions, 6, "Incorrect metrics.variant_positions")
+        self.assertEqual(metrics.monomorphic_variant_positions, 6, "Incorrect metrics.monomorphic_variant_positions")
+        self.assertEqual(metrics.polymorphic_variant_positions, 0, "Incorrect metrics.polymorphic_variant_positions")
+        self.assertEqual(metrics.single_replicate_positions, 6, "Incorrect metrics.single_replicate_positions")
+        self.assertEqual(metrics.multiple_replicate_positions, 0, "Incorrect metrics.multiple_replicate_positions")
+
+        seq_str = "AAA"
+        all_eligible_positions = [i for i in range(len(seq_str))]
+        num_sims = 5
+        pool_size = 3
+        mono = False
+        metrics = snpmutator.run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, pool_size, group_size, mono)
+        self.assertEqual(metrics.replicates, 5, "Incorrect metrics.replicates")
+        self.assertEqual(metrics.variant_positions, 3, "Incorrect metrics.variant_positions")
+        self.assertEqual(metrics.monomorphic_variant_positions, 0, "Incorrect metrics.monomorphic_variant_positions")
+        self.assertEqual(metrics.polymorphic_variant_positions, 3, "Incorrect metrics.polymorphic_variant_positions")
+        self.assertEqual(metrics.single_replicate_positions, 0, "Incorrect metrics.single_replicate_positions")
+        self.assertEqual(metrics.multiple_replicate_positions, 3, "Incorrect metrics.multiple_replicate_positions")
+
     def tearDown(self):
         """
         Delete all the temporary directories and files created during this
         testing session.
         """
-        if os.path.exists("original_mutated_1.fasta"):
-            os.remove("original_mutated_1.fasta")
-        if os.path.exists("original_mutated_2.fasta"):
-            os.remove("original_mutated_2.fasta")
-        if os.path.exists("original_mutated_3.fasta"):
-            os.remove("original_mutated_3.fasta")
+        for replicate in range(1,6):
+            file_name = "original_mutated_%d.fasta" % replicate
+            if os.path.exists(file_name):
+                os.remove(file_name)
         if os.path.exists("original_snpListMutated.txt"):
             os.remove("original_snpListMutated.txt")
         TempDirectory.cleanup_all()
