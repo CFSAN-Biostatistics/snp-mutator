@@ -19,11 +19,11 @@ from testfixtures import TempDirectory
 import random
 import argparse
 try:
-  # Python 3
-  from itertools import zip_longest
+    # Python 3
+    from itertools import zip_longest
 except ImportError:
-  # Python 2
-  from itertools import izip_longest as zip_longest
+    # Python 2
+    from itertools import izip_longest as zip_longest
 
 from snpmutator import script as snpmutator
 
@@ -45,6 +45,7 @@ def make_default_args(original_fasta_file_path):
     args.vcf_file = None
     args.metrics_file = None
     return args
+
 
 def make_random_dna_string(length, allowed_bases):
     """
@@ -753,7 +754,7 @@ class TestSnpmutator(unittest.TestCase):
         Delete all the temporary directories and files created during this
         testing session.
         """
-        for replicate in range(1,6):
+        for replicate in range(1, 6):
             file_name = "original_mutated_%d.fasta" % replicate
             if os.path.exists(file_name):
                 os.remove(file_name)

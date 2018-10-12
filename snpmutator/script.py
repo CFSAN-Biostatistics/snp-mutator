@@ -215,7 +215,9 @@ def mutate_all(seq_str, eligible_pos, num_subs, num_insertions, num_deletions):
     del_d = set()
 
     num_mutations = float(num_subs + num_insertions + num_deletions)
-    sub_len, ins_len, del_len = round(num_subs/num_mutations*len(eligible_pos)), round(num_insertions/num_mutations*len(eligible_pos)),round(num_deletions/num_mutations*len(eligible_pos))
+    sub_len = round(num_subs / num_mutations * len(eligible_pos))
+    ins_len = round(num_insertions / num_mutations * len(eligible_pos))
+    del_len = round(num_deletions / num_mutations * len(eligible_pos))
 
     for x in eligible_pos:
         original_base = seq_str[x]
@@ -262,9 +264,9 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
     # while preserving position information
     new_indexed_seq = list(seq_str)
 
-    subs_positions=[]
-    deletion_positions=[]
-    insertion_positions=[]
+    subs_positions = []
+    deletion_positions = []
+    insertion_positions = []
 
     if num_subs > 0:
         subs_positions = random.choice(list(pre_mutated_sub.keys()), size=num_subs, replace=False)
@@ -277,9 +279,9 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
             new_indexed_seq[i] = ""
 
     if num_insertions > 0:
-        insertion_positions =random.choice(list(pre_mutated_ins.keys()), size=num_insertions, replace=False)
+        insertion_positions = random.choice(list(pre_mutated_ins.keys()), size=num_insertions, replace=False)
         for i in insertion_positions:
-             new_indexed_seq[i] = pre_mutated_ins[i]
+            new_indexed_seq[i] = pre_mutated_ins[i]
 
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
@@ -513,8 +515,8 @@ def run_from_args(args):
         print("ERROR: You have specified a number of substitutions that is greater than the eligible length of the sequence", file=sys.stderr)
         sys.exit(1)
 
-    metrics = run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs,
-                    args.num_insertions, args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file)
+    metrics = run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs, args.num_insertions,
+                              args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file)
 
     if args.metrics_file:
         with open(args.metrics_file, 'w') as f:
@@ -524,6 +526,7 @@ def run_from_args(args):
             f.write("%d positions having polymorphic variants\n" % metrics.polymorphic_variant_positions)
             f.write("%d variant positions found in exactly one replicate\n" % metrics.single_replicate_positions)
             f.write("%d variant positions found in multiple replicates\n" % metrics.multiple_replicate_positions)
+
 
 def run_from_line(line):
     """Run a command with a command line.
@@ -563,4 +566,3 @@ def main():
     """
     args = parse_arguments(sys.argv[1:])
     return run_from_args(args)
-
