@@ -74,6 +74,10 @@ The defline (description) of the generated fasta files is copied from the origin
 fasta file, but with a suffix describing the mutations.  For example, the defline suffix
 ``(mutated s=2 i=1 d=0)`` indicates there are two substitutions, one insertion, and zero deletions.
 
+Metrics
+~~~~~~~
+With the ``--metrics`` option, a file of metrics is created describing the mutated positions.
+
 Pooling
 -------
 The ``--pool`` option increases the likelihood of multiple replicates having mutations at the
