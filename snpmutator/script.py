@@ -458,7 +458,6 @@ def parse_arguments(system_args):
     parser = argparse.ArgumentParser(description=usage, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(                                             dest="input_fasta_file", type=str,                            help="Input fasta file.")
-    parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str,              default=None, help="Output positional summary file.")
     parser.add_argument("-n", "--num-simulations",   metavar="INT",  dest="num_sims",         type=positive_int,     default=100,  help="Number of mutated sequences to generate.")
     parser.add_argument("-s", "--num-substitutions", metavar="INT",  dest="num_subs",         type=non_negative_int, default=500,  help="Number of substitutions.")
     parser.add_argument("-i", "--num-insertions",    metavar="INT",  dest="num_insertions",   type=non_negative_int, default=20,   help="Number of insertions.")
@@ -468,6 +467,8 @@ def parse_arguments(system_args):
     parser.add_argument("-g", "--group",             metavar="INT",  dest="group_size",       type=positive_int,     default=None, help="Group size. When greater than zero, this parameter chooses a new pool of positions for each group of replicates.")
     parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
     parser.add_argument("-I", "--seqid",             metavar="SEQID",dest="seq_id",           type=str,              default=None, help="Output fasta description line sequence ID. Each mutated output file has only one sequence. If not specified, the defline id will be the id of the first sequence in the input fasta file.  The defline is always suffixed with an annotation in this format: (mutated s=900 i=50 d=50).  The seq id is also written to the CHROM column of the output VCF file.")
+    parser.add_argument("-R", "--ref",               metavar="FILE", dest="concat_ref_file",  type=str,              default=None, help="Output concatenanted reference file with no mutations, but all sequences concatenanted together. All the replicates will be mutations of this file.")
+    parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str,              default=None, help="Output positional summary file.")
     parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
     parser.add_argument("-M", "--metrics",           metavar="FILE", dest="metrics_file",     type=str,              default=None, help="Output metrics file.")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
@@ -530,6 +531,9 @@ def run_from_args(args):
             f.write("%d variant positions found in exactly one replicate\n" % metrics.single_replicate_positions)
             f.write("%d variant positions found in multiple replicates\n" % metrics.multiple_replicate_positions)
 
+    if args.concat_ref_file:
+        mutations = (0, 0, 0)
+        write_fasta_sequence(seq_name, args.concat_ref_file, seq_str, mutations)
 
 def run_from_line(line):
     """Run a command with a command line.

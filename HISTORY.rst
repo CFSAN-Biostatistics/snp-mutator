@@ -6,6 +6,8 @@ History
 1.1.0 (2018-10-23)
 ---------------------
 * Added the capability to specify the fasta defline sequence id in the output files.
+* The unmutated, but concatenated sequence reference is written to a separate output file.
+  All the replicates will be mutations of this file.
 
 1.0.0 (2018-10-12)
 ---------------------

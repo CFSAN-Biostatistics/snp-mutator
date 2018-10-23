@@ -41,6 +41,7 @@ def make_default_args(original_fasta_file_path):
     args.subset_len = 0
     args.group_size = None
     args.mono = False
+    args.concat_ref_file = None
     args.summary_file = None
     args.seq_id = None
     args.vcf_file = None
@@ -535,6 +536,28 @@ class TestSnpmutator(unittest.TestCase):
         self.assertNotEqual(str(mutated_seq_record2.seq), str(mutated_seq_record3.seq), "Generated sequences 2 and 3 should be different.")
         self.assertNotEqual(str(mutated_seq_record1.seq), str(mutated_seq_record3.seq), "Generated sequences 1 and 3 should be different.")
 
+    def test_concat_ref(self):
+        """Verify the concat ref file is created if and only if requested.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 1000)
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
+        args.num_sims = 1
+
+        concat_ref_file = os.path.join(directory.path, "concat_ref.fasta")
+
+        args.concat_ref_file = None
+        snpmutator.run_from_args(args)
+        file_exists = os.path.exists(concat_ref_file)
+        self.assertFalse(file_exists, "The concat ref file should not exist when not explicitly requested")
+
+        args.concat_ref_file = concat_ref_file
+        snpmutator.run_from_args(args)
+        file_exists = os.path.exists(concat_ref_file)
+        self.assertTrue(file_exists, "The concat ref file is missing when requested.")
+
+
     def test_summary_creation(self):
         """Verify the summary file is created if and only if requested.
         """
@@ -770,7 +793,6 @@ class TestSnpmutator(unittest.TestCase):
         snpmutator.run_from_args(args)
         mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
         self.assertEqual(mutated_seq_record1.id, args.seq_id, 'Overridden defline seq id "%s" does not match expected value "%s"' % (mutated_seq_record1.id, args.seq_id))
-
 
 
     def tearDown(self):

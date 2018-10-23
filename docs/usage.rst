@@ -33,7 +33,8 @@ Step 3 - Generate the mutated sequences::
     # -g 100, partition the 1000 replicates into 10 groups of 100 replicates, with each group having a separate pool of positions
     # -m, create monomorphic alleles within each pool
     # -M metrics, generate a metrics output file
-    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m -M metrics NC_011149.fasta
+    # -R seq.fasta, generate the contatenated reference fasta file
+    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m -M metrics -R seq.fasta NC_011149.fasta
 
 Step 4 - Examine the results::
 
@@ -73,6 +74,11 @@ are named ``NC_011149_mutated_1.fasta`` and ``NC_011149_mutated_2.fasta``.
 The defline (description) of the generated fasta files is copied from the original reference
 fasta file, but with a suffix describing the mutations.  For example, the defline suffix
 ``(mutated s=2 i=1 d=0)`` indicates there are two substitutions, one insertion, and zero deletions.
+
+Reference File
+~~~~~~~~~~~~~~
+An optional concatenated reference file can be generated. This is the original fasta file with all
+the sequences concatenated into a single sequence. All the replicates will be mutations of this file.
 
 Metrics
 ~~~~~~~
@@ -119,8 +125,6 @@ Command Reference
 
   optional arguments:
     -h, --help            show this help message and exit
-    -o FILE, --summary FILE
-                          Output positional summary file. (default: None)
     -n INT, --num-simulations INT
                           Number of mutated sequences to generate. (default:
                           100)
@@ -148,6 +152,12 @@ Command Reference
                           (mutated s=900 i=50 d=50). The seq id is also written
                           to the CHROM column of the output VCF file. (default:
                           None)
+    -R FILE, --ref FILE   Output concatenanted reference file with no mutations,
+                          but all sequences concatenanted together. All the
+                          replicates will be mutations of this file. (default:
+                          None)
+    -o FILE, --summary FILE
+                          Output positional summary file. (default: None)
     -v FILE, --vcf FILE   Output VCF file. (default: None)
     -M FILE, --metrics FILE
                           Output metrics file. (default: None)
