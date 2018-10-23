@@ -416,7 +416,7 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
         if summary_file_path:
             snp_list_file.close()
         if vcf_file_path:
-            vcf_writer_obj.write(base_file_name)
+            vcf_writer_obj.write(base_file_name, seq_name)
 
 
 def parse_arguments(system_args):
@@ -467,6 +467,7 @@ def parse_arguments(system_args):
     parser.add_argument("-p", "--pool",              metavar="INT",  dest="subset_len",       type=positive_int,     default=0,    help="Choose variants from a pool of eligible positions of the specified size")
     parser.add_argument("-g", "--group",             metavar="INT",  dest="group_size",       type=positive_int,     default=None, help="Group size. When greater than zero, this parameter chooses a new pool of positions for each group of replicates.")
     parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
+    parser.add_argument("-I", "--seqid",             metavar="SEQID",dest="seq_id",           type=str,              default=None, help="Output fasta description line sequence ID. Each mutated output file has only one sequence. If not specified, the defline id will be the id of the first sequence in the input fasta file.  The defline is always suffixed with an annotation in this format: (mutated s=900 i=50 d=50).  The seq id is also written to the CHROM column of the output VCF file.")
     parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
     parser.add_argument("-M", "--metrics",           metavar="FILE", dest="metrics_file",     type=str,              default=None, help="Output metrics file.")
     parser.add_argument('--version', action='version', version='%(prog)s version ' + __version__)
@@ -502,6 +503,8 @@ def run_from_args(args):
 
     # Read the reference and generate mutations
     seq_name, seq_str = read_fasta_sequence(in_file_path)
+    if args.seq_id:
+        seq_name = args.seq_id
 
     # Find the eligible positions
     all_eligible_positions = get_all_eligible_positions(seq_str)

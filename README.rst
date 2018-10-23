@@ -40,6 +40,8 @@ Features
 * Mutations can be either monomorphic or polymorphic.
 * VCF file generation.
 * Various metrics can be saved to an output file.
+* The fasta defline sequence id can be customized.
+
 
 Citing SNP Mutator
 --------------------------------------

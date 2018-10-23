@@ -42,6 +42,7 @@ def make_default_args(original_fasta_file_path):
     args.group_size = None
     args.mono = False
     args.summary_file = None
+    args.seq_id = None
     args.vcf_file = None
     args.metrics_file = None
     return args
@@ -748,6 +749,29 @@ class TestSnpmutator(unittest.TestCase):
         self.assertEqual(metrics.polymorphic_variant_positions, 3, "Incorrect metrics.polymorphic_variant_positions")
         self.assertEqual(metrics.single_replicate_positions, 0, "Incorrect metrics.single_replicate_positions")
         self.assertEqual(metrics.multiple_replicate_positions, 3, "Incorrect metrics.multiple_replicate_positions")
+
+    def test_seqid_override(self):
+        """Verify output fasta files can have the defline seqid overridden.
+        """
+        directory = TempDirectory()
+        original_file_path, dna = write_random_dna_fasta(directory.path, "original.fasta", 50)
+        args = make_default_args(original_file_path)
+        args.random_seed = 1
+        args.num_sims = 1
+        args.num_subs = 3
+        original_seq_record = read_fasta_seq_record(original_file_path)
+
+        args.seq_id = None
+        snpmutator.run_from_args(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(original_seq_record.id, mutated_seq_record1.id, "Defline seq id should not change when not requested.")
+
+        args.seq_id = "test_override_seqid"
+        snpmutator.run_from_args(args)
+        mutated_seq_record1 = read_fasta_seq_record("original_mutated_1.fasta")
+        self.assertEqual(mutated_seq_record1.id, args.seq_id, 'Overridden defline seq id "%s" does not match expected value "%s"' % (mutated_seq_record1.id, args.seq_id))
+
+
 
     def tearDown(self):
         """

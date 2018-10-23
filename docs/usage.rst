@@ -105,7 +105,8 @@ Command Reference
 ::
 
   usage: snpmutator [-h] [-o FILE] [-n INT] [-s INT] [-i INT] [-d INT] [-r INT]
-                    [-p INT] [-g INT] [-m] [-v FILE] [-M FILE] [--version]
+                    [-p INT] [-g INT] [-m] [-I SEQID] [-v FILE] [-M FILE]
+                    [--version]
                     input_fasta_file
 
   Generate mutated sequence files from a reference genome. Takes a fasta file
@@ -138,6 +139,15 @@ Command Reference
                           chooses a new pool of positions for each group of
                           replicates. (default: None)
     -m, --mono            Create monomorphic alleles (default: False)
+    -I SEQID, --seqid SEQID
+                          Output fasta description line sequence ID. Each
+                          mutated output file has only one sequence. If not
+                          specified, the defline id will be the id of the first
+                          sequence in the input fasta file. The defline is
+                          always suffixed with an annotation in this format:
+                          (mutated s=900 i=50 d=50). The seq id is also written
+                          to the CHROM column of the output VCF file. (default:
+                          None)
     -v FILE, --vcf FILE   Output VCF file. (default: None)
     -M FILE, --metrics FILE
                           Output metrics file. (default: None)

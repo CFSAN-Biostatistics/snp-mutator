@@ -78,15 +78,16 @@ class VcfWriter(object):
             alt_num = 1 + self.known_alts[pos].index(alt) # ALT zero is reference match
             self.alt_dict[(pos, replicate_name)] = alt_num
 
-    def write(self, reference_name):
+    def write(self, reference_name, chrom):
         """Write the stored mutations to the VCF output file.
 
         Parameters
         ----------
         reference_name : str
             Name of reference to write to the header.
-        replicate_names : list of str
-            List of sample names.
+        chrom : str
+            Name of the chrom to be written in the VCF CHROM column. It will be the same for
+            all rows because there is only one contig.
         """
         print("Writing VCF file.", file=sys.stderr)
         with open(self.file_path, "w") as f:
@@ -101,7 +102,6 @@ class VcfWriter(object):
             f.write(header)
 
             # Write the variant calls
-            chrom = "1" # TODO: use the real chrome name
             for pos in sorted(self.known_alts):
                 ref = self.reference[pos]
                 alt_str = ','.join(self.known_alts[pos])

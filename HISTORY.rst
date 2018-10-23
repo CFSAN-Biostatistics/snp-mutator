@@ -3,6 +3,10 @@
 History
 -------
 
+1.1.0 (2018-10-23)
+---------------------
+* Added the capability to specify the fasta defline sequence id in the output files.
+
 1.0.0 (2018-10-12)
 ---------------------
 * Mutations can be chosen from a subset (pool) of all possible positions.
