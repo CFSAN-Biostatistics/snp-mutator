@@ -8,6 +8,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 from collections import defaultdict
+import errno
 from numpy import random
 import os.path
 import sys
@@ -29,6 +30,26 @@ class Metrics(object):
         self.single_replicate_positions = 0
         self.multiple_replicate_positions = 0
 
+
+def mkdir_p(path):
+    """Python equivalent of bash mkdir -p.
+
+    Parameters
+    ----------
+    path : str
+        Directory path to create.
+
+    Raises
+    ------
+    OSError if the directory does not already exist and cannot be created
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 def read_fasta_sequence(fasta_file_path):
     """
@@ -286,7 +307,7 @@ def build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_
     return (new_indexed_seq, subs_positions, insertion_positions, deletion_positions, )
 
 
-def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, pool_size, group_size, mono, summary_file_path=None, vcf_file_path=None):
+def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, num_sims, num_subs, num_insertions, num_deletions, pool_size, group_size, mono, summary_file_path=None, vcf_file_path=None, fasta_output_dir="."):
     """Generate multiple random mutations of a reference sequence, repeatedly
     calling build_mutated_seq() to create each of the mutated sequences.
 
@@ -323,6 +344,8 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
     vcf_file_path : str, optional
         Path to VCF file where a list of positions and corresponding
         mutations will be written.
+    fasta_output_dir : str, optional
+        Output directory where the fasta replicates will be generated.  Defaults to the current working directory.
 
     Returns
     -------
@@ -371,7 +394,9 @@ def run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, n
                     build_limited_seq(seq_str, eligible_positions, pre_mutated_sub, pre_mutated_ins, pre_mutated_del, num_subs, num_insertions, num_deletions)
 
             mutations = (num_subs, num_insertions, num_deletions)
-            write_fasta_sequence(seq_name, replicate_name + ".fasta", new_indexed_seq, mutations)
+            mkdir_p(fasta_output_dir)
+            fasta_path = os.path.join(fasta_output_dir, replicate_name + ".fasta")
+            write_fasta_sequence(seq_name, fasta_path, new_indexed_seq, mutations)
 
             # Collect metrics
             for pos in subs_positions:
@@ -468,6 +493,7 @@ def parse_arguments(system_args):
     parser.add_argument('-m', '--mono',         action='store_true', dest="mono",                                                  help="Create monomorphic alleles")
     parser.add_argument("-I", "--seqid",             metavar="SEQID",dest="seq_id",           type=str,              default=None, help="Output fasta description line sequence ID. Each mutated output file has only one sequence. If not specified, the defline id will be the id of the first sequence in the input fasta file.  The defline is always suffixed with an annotation in this format: (mutated s=900 i=50 d=50).  The seq id is also written to the CHROM column of the output VCF file.")
     parser.add_argument("-R", "--ref",               metavar="FILE", dest="concat_ref_file",  type=str,              default=None, help="Output concatenanted reference file with no mutations, but all sequences concatenanted together. All the replicates will be mutations of this file.")
+    parser.add_argument("-F", "--fasta-dir",         metavar="DIR",  dest="fasta_output_dir", type=str,              default=".",  help="Output directory for generated fasta files.")
     parser.add_argument("-o", "--summary",           metavar="FILE", dest="summary_file",     type=str,              default=None, help="Output positional summary file.")
     parser.add_argument("-v", "--vcf",               metavar="FILE", dest="vcf_file",         type=str,              default=None, help="Output VCF file.")
     parser.add_argument("-M", "--metrics",           metavar="FILE", dest="metrics_file",     type=str,              default=None, help="Output metrics file.")
@@ -520,7 +546,7 @@ def run_from_args(args):
         sys.exit(1)
 
     metrics = run_simulations(seq_str, all_eligible_positions, base_file_name, seq_name, args.num_sims, args.num_subs, args.num_insertions,
-                              args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file)
+                              args.num_deletions, args.subset_len, args.group_size, args.mono, args.summary_file, args.vcf_file, args.fasta_output_dir)
 
     if args.metrics_file:
         with open(args.metrics_file, 'w') as f:

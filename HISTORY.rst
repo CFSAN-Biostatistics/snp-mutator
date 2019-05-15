@@ -5,7 +5,8 @@ History
 
 1.2.0 (2019-05-15)
 ---------------------
-* Add support for Python 3.6 and 3.7.
+* Added support for Python 3.6 and 3.7.
+* Added a command line option to specify the output directory for the generated fasta files.
 
 1.1.0 (2018-10-23)
 ---------------------

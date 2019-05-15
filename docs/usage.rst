@@ -34,7 +34,8 @@ Step 3 - Generate the mutated sequences::
     # -m, create monomorphic alleles within each pool
     # -M metrics, generate a metrics output file
     # -R seq.fasta, generate the contatenated reference fasta file
-    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m -M metrics -R seq.fasta NC_011149.fasta
+    # -F fasta, directory where the fasta replicates will be generated
+    $ snpmutator -r 1 -n 1000 -s 900 -i 50 -d 50 -o summary.tsv -v variants.vcf -p 100000 -g 100 -m -M metrics -R seq.fasta -F fasta NC_011149.fasta
 
 Step 4 - Examine the results::
 
@@ -65,7 +66,7 @@ An optional VCF file lists the mutations in Variant Call Format.
 
 Replicate Files
 ~~~~~~~~~~~~~~~
-Multiple mutated replicate files are generated in the current working directory.  Files are
+Multiple mutated replicate files are generated in a directory of your choice.  Files are
 named with the basename of the original reference file, suffixed with ``_mutated_#.fasta``.
 
 For example, if the reference file name is ``NC_011149.fasta``, the first two replicate files

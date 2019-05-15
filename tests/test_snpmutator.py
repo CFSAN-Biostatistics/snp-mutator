@@ -46,6 +46,8 @@ def make_default_args(original_fasta_file_path):
     args.seq_id = None
     args.vcf_file = None
     args.metrics_file = None
+    args.fasta_output_dir = "."
+
     return args
 
 
