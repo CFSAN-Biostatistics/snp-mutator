@@ -30,7 +30,7 @@ test_requirements = [
 
 setup(
     name='snp-mutator',
-    version='1.1.0',
+    version='1.2.0',
     description="Generate mutated sequence files from a reference genome.",
     long_description=readme + '\n\n' + history,
     author="Hugh Rand",
