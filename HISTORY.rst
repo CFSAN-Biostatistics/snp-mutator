@@ -3,6 +3,10 @@
 History
 -------
 
+1.2.0 (2019-05-15)
+---------------------
+* Add support for Python 3.6 and 3.7.
+
 1.1.0 (2018-10-23)
 ---------------------
 * Added the capability to specify the fasta defline sequence id in the output files.
