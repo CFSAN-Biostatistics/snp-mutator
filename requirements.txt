@@ -1,1 +1,2 @@
-wheel==0.23.0
+# Runtime dependencies are declared in setup.py (install_requires).
+# Build dependencies (wheel, setuptools, etc.) are managed automatically by pip's build isolation.
